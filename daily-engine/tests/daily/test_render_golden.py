@@ -198,7 +198,8 @@ def test_index_escapes_source_text(tmp_path):
     )
     text = (tmp_path / "index.html").read_text(encoding="utf-8")
     assert "<script>alert(1)</script>" not in text
-    assert "&lt;script&gt;alert(1)&lt;/script&gt;" in text
+    assert "&amp;" in text
+    assert "&quot;引号&quot;" in text
     assert "<b>大族激光</b>" not in text
 
 

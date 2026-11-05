@@ -6,6 +6,8 @@ import re
 from datetime import date, datetime
 from typing import Sequence
 
+from bs4 import BeautifulSoup
+
 from ..market.schema import Fact, MarketSnapshot
 from ..market.trading_day import TradingDayInfo
 from ...models import ContentItem
@@ -82,8 +84,14 @@ def describe_market(facts: Sequence[Fact], labels: Sequence[str]) -> str:
     return f"{_market_subject(labels)}{trend}，{'，'.join(parts)}。"
 
 
+def _plain(text: str | None) -> str:
+    """Strip HTML tags and collapse whitespace."""
+    soup = BeautifulSoup(text or "", "html.parser")
+    return " ".join(soup.get_text(" ", strip=True).split())
+
+
 def _snippet(text: str | None, limit: int = 80) -> str:
-    cleaned = " ".join((text or "").split())
+    cleaned = _plain(text)
     if not cleaned:
         return ""
     parts = re.split(r"(?<=[。！？.!?])", cleaned, maxsplit=1)
@@ -137,7 +145,7 @@ def _policy_items(news: Sequence[ContentItem]) -> list[NewsBrief]:
     scored.sort(key=lambda pair: (pair[0], pair[1].published_at), reverse=True)
     return [
         NewsBrief(
-            title=item.title,
+            title=_plain(item.title),
             url=str(item.url),
             source_name=_source_name(item),
             snippet=_snippet(item.content or item.title),

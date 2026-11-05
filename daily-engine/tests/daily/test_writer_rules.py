@@ -25,6 +25,7 @@ from src.daily.writer.scoring import (
     score_candidate,
     select_items,
 )
+from src.models import ContentItem, SourceType
 
 ROOT = Path(__file__).resolve().parents[2]
 NOW = datetime(2026, 11, 5, 8, 10, tzinfo=ZoneInfo("Asia/Shanghai"))
@@ -135,6 +136,41 @@ def test_morning_draft_marks_missing_data():
         snapshot, [], report_day=date(2026, 11, 5), now=NOW, trading=trading
     )
     assert "暂缺" in draft.us_market
+
+
+def test_morning_policy_snippet_strips_html():
+    snapshot = MarketSnapshot(facts=[], captured_at=NOW)
+    news = [
+        ContentItem(
+            id="rss:html:1",
+            source_type=SourceType.RSS,
+            title="央行发布稳市场举措",
+            url="https://example.com/news/html",
+            content=(
+                "<p>央行、金融监管总局、证监会联合发布稳市场举措。</p>"
+                "<h3>标题</h3><p>第二段内容。</p>"
+            ),
+            published_at=NOW,
+            metadata={"feed_name": "东方财富要闻"},
+        )
+    ]
+    trading = TradingDayInfo(
+        day=date(2026, 11, 5),
+        is_trading=True,
+        previous=date(2026, 11, 4),
+        verified=True,
+    )
+    draft = build_morning_draft(
+        snapshot,
+        news,
+        report_day=date(2026, 11, 5),
+        now=NOW,
+        trading=trading,
+    )
+    assert draft.policy_items
+    snippet = draft.policy_items[0].snippet
+    assert "<p>" not in snippet
+    assert "央行、金融监管总局" in snippet
 
 
 def test_laser_draft_limits_key_points_to_five():

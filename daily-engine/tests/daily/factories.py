@@ -87,7 +87,7 @@ def fixed_morning_draft() -> MorningDraft:
         ContentItem(
             id="rss:test:1",
             source_type=SourceType.RSS,
-            title="央行发布政策<script>alert(1)</script>",
+            title='央行发布政策 & "引号" <script>alert(1)</script>',
             url="https://example.com/news/1",
             content="央行今日发布政策，市场关注流动性变化。",
             published_at=NOW,
