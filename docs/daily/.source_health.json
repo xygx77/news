@@ -21,7 +21,8 @@
   },
   "Industrysourcing激光频道": {
     "last_ok": "2026-11-05",
-    "consecutive_failures": 0
+    "consecutive_failures": 1,
+    "last_failure": "2026-11-05"
   },
   "European Optical Society": {
     "last_ok": "2026-11-05",
@@ -29,7 +30,8 @@
   },
   "激光世界中文版": {
     "last_failure": "2026-11-05",
-    "consecutive_failures": 1
+    "consecutive_failures": 0,
+    "last_ok": "2026-11-05"
   },
   "中国光学光电子行业协会": {
     "last_ok": "2026-11-05",
