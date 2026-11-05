@@ -9,7 +9,11 @@ import httpx
 from .schema import Fact
 
 FRED_CSV_URL = "https://fred.stlouisfed.org/graph/fredgraph.csv"
-FRED_SERIES = {"DGS10": "美国 10 年期国债", "DGS30": "美国 30 年期国债"}
+FRED_SERIES = {
+    "DGS2": "美国 2 年期国债",
+    "DGS10": "美国 10 年期国债",
+    "DGS30": "美国 30 年期国债",
+}
 
 
 def _direction(value: float) -> str:

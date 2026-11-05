@@ -12,15 +12,25 @@ from .template import fill_placeholders, render_conditional_blocks
 
 ASHARE_LABELS = ("上证指数", "深证成指", "创业板指", "科创50", "沪深300")
 RATE_LABELS = (
+    "美国 2 年期国债",
     "美国 10 年期国债",
     "美国 30 年期国债",
     "中国 10 年期国债",
     "中国 30 年期国债",
     "美元指数",
     "美元兑离岸人民币",
+    "欧元/美元",
+    "英镑/美元",
+    "美元/日元",
     "美元兑人民币中间价",
 )
-COMMODITY_LABELS = ("WTI 原油", "COMEX 黄金", "COMEX 铜", "布伦特原油")
+COMMODITY_LABELS = (
+    "WTI 原油",
+    "布伦特原油",
+    "COMEX 黄金",
+    "COMEX 白银",
+    "COMEX 铜",
+)
 
 
 def _with_placeholders(
@@ -104,12 +114,20 @@ def _sector_boxes(draft: MorningDraft) -> str:
         if not items:
             body = '<p class="small">暂缺</p>'
         else:
-            entries = "".join(
-                f"<li>{_escape(fact.label)} "
-                f'<span class="tag tag-{fact.direction}">{_escape(fact.change)}</span></li>'
-                for fact in items
-            )
-            body = f"<ul>{entries}</ul>"
+            entries = []
+            for fact in items:
+                catalyst = draft.sector_catalysts.get(fact.label, "")
+                catalyst_html = (
+                    f'<div class="small">催化剂：{html.escape(catalyst)}</div>'
+                    if catalyst
+                    else ""
+                )
+                entries.append(
+                    f"<li>{_escape(fact.label)} "
+                    f'<span class="tag tag-{fact.direction}">{_escape(fact.change)}</span>'
+                    f"{catalyst_html}</li>"
+                )
+            body = f"<ul>{''.join(entries)}</ul>"
         classes = f"callout {extra_class}".strip()
         return (
             f'<div class="{classes}"><div class="callout-title">{_escape(title)}</div>'
@@ -120,6 +138,23 @@ def _sector_boxes(draft: MorningDraft) -> str:
 
 
 def _policy_content(draft: MorningDraft) -> str:
+    if draft.policy_sections:
+        parts: list[str] = []
+        for title, briefs in draft.policy_sections.items():
+            parts.append(f"<h3>{html.escape(title)}</h3>")
+            if not briefs:
+                parts.append('<p class="small">暂缺</p>')
+                continue
+            entries = "".join(
+                f'<li><a href="{html.escape(brief.url, quote=True)}">'
+                f"{html.escape(brief.title)}</a><br>"
+                f'<span class="small">{html.escape(brief.snippet)}'
+                f"（{html.escape(brief.source_name)}）</span></li>"
+                for brief in briefs
+            )
+            parts.append(f"<ul>{entries}</ul>")
+        return "".join(parts)
+
     if not draft.policy_items:
         return '<p class="small">暂缺</p>'
     entries = "".join(

@@ -11,7 +11,7 @@ from urllib.parse import urlsplit
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from ..models import RSSSourceConfig
+from ..models import AIConfig, RSSSourceConfig
 
 _ENV_PATTERN = re.compile(r"\$\{(\w+)\}")
 
@@ -148,17 +148,17 @@ class MarketSettings(BaseModel):
 class DailyConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    writer: Literal["rule"] = "rule"
+    writer: Literal["rule", "ai"] = "rule"
+    ai: AIConfig | None = None
     daily: DailySettings = Field(default_factory=DailySettings)
     sources: DailySourcesConfig = Field(default_factory=DailySourcesConfig)
     market: MarketSettings = Field(default_factory=MarketSettings)
 
-    @model_validator(mode="before")
-    @classmethod
-    def reject_ai_writer(cls, value: Any) -> Any:
-        if isinstance(value, dict) and value.get("writer") == "ai":
-            raise ValueError("AI writer not implemented in v1")
-        return value
+    @model_validator(mode="after")
+    def validate_writer(self) -> "DailyConfig":
+        if self.writer == "ai" and self.ai is None:
+            raise ValueError("writer='ai' requires an ai config")
+        return self
 
 
 def load_daily_config(path: Path) -> DailyConfig:

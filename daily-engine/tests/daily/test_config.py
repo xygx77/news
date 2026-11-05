@@ -7,7 +7,9 @@ ROOT = Path(__file__).resolve().parents[2]
 
 def test_load_daily_config_real_file():
     cfg = load_daily_config(ROOT / "data/config.daily.json")
-    assert cfg.writer == "rule"
+    assert cfg.writer == "ai"
+    assert cfg.ai is not None
+    assert cfg.ai.model == "glm-4-flash"
     assert cfg.daily.timezone == "Asia/Shanghai"
     assert cfg.daily.laser.window_hours == 48
     assert cfg.daily.laser.fallback_window_hours == 72
@@ -28,7 +30,7 @@ def test_ai_writer_is_rejected(tmp_path):
     path.write_text(
         '{"writer":"ai","daily":{},"sources":{},"market":{}}', encoding="utf-8"
     )
-    with pytest.raises(ValueError, match="AI writer not implemented"):
+    with pytest.raises(ValueError, match="requires an ai config"):
         load_daily_config(path)
 
 

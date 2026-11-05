@@ -75,6 +75,28 @@ def test_render_morning_omits_ashare_on_holiday(tmp_path):
     assert "今日休市" in text
 
 
+def test_render_policy_sections_and_sector_catalyst(tmp_path):
+    from tests.daily.factories import fixed_morning_draft
+
+    draft = fixed_morning_draft()
+    draft.policy_sections = {
+        "政策": list(draft.policy_items),
+        "宏观数据与产业": [],
+        "公司公告与业绩预告": [],
+    }
+    draft.sector_catalysts = {"半导体": "稳市场举措提振风险偏好。"}
+    out = tmp_path / "morning.html"
+    render_morning(
+        draft,
+        template_path=ROOT / "templates/daily/morning.html",
+        output_path=out,
+    )
+    text = out.read_text(encoding="utf-8")
+    assert "<h3>政策</h3>" in text
+    assert "<h3>宏观数据与产业</h3>" in text
+    assert "催化剂：稳市场举措提振风险偏好。" in text
+
+
 def test_render_morning_includes_fx_rows(tmp_path):
     from tests.daily.factories import fixed_morning_draft
 

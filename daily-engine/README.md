@@ -74,4 +74,12 @@ powershell -ExecutionPolicy Bypass -File scripts\sync_news_repo.ps1 -Push
 
 ## 规则写作说明
 
-v1 不调用大模型：晨报由事实表 + 固定句式生成，激光简报按关键词权重排序并摘录正文。趋势点评位置保留，接入 AI 后再启用。
+晨报默认使用规则写作；配置 `writer: "ai"` 且提供 `ZHIPU_API_KEY` 时，AI 只负责分析段落（“什么变了”、板块催化剂、政策/宏观/公司分类、风险解释），事实表和所有数字仍由程序生成。AI 超时、JSON 非法或数字/来源校验失败时会自动回退到规则写作。
+
+本地把 Key 放在仓库根目录 `.env`（已 gitignore）：
+
+```env
+ZHIPU_API_KEY=...
+```
+
+GitHub Actions 需要在仓库 **Settings → Secrets and variables → Actions** 新建同名 Secret `ZHIPU_API_KEY`；未配置时云端会自动使用规则写作，不影响页面生成。

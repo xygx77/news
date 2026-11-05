@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date, datetime
 
 from ..market.schema import CalendarEvent, Fact
@@ -44,6 +44,9 @@ class MorningDraft:
     sources: list[SourceRef]
     missing: list[str]
     captured_at: datetime
+    policy_sections: dict[str, list[NewsBrief]] = field(default_factory=dict)
+    sector_catalysts: dict[str, str] = field(default_factory=dict)
+    ai_used: bool = False
 
 
 @dataclass

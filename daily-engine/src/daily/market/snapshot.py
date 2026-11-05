@@ -102,20 +102,21 @@ async def fetch_market_snapshot(
     ):
         missing.append("中国国债")
 
-    facts.append(
-        Fact(
-            id="commodity:brent",
-            group="commodity",
-            label="布伦特原油",
-            value="暂缺",
-            status="missing",
-            note="v1 无稳定公开接口",
-            source_name="暂缺",
-            source_url="https://www.eia.gov/",
-            as_of="暂缺",
+    if not any(fact.label == "布伦特原油" for fact in facts):
+        facts.append(
+            Fact(
+                id="commodity:brent",
+                group="commodity",
+                label="布伦特原油",
+                value="暂缺",
+                status="missing",
+                note="暂缺",
+                source_name="暂缺",
+                source_url="https://www.eia.gov/",
+                as_of="暂缺",
+            )
         )
-    )
-    missing.append("布伦特原油")
+        missing.append("布伦特原油")
 
     return MarketSnapshot(
         facts=facts,

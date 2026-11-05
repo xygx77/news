@@ -158,33 +158,160 @@ def _policy_items(news: Sequence[ContentItem]) -> list[NewsBrief]:
 def _risk_items(
     facts: Sequence[Fact], news: Sequence[ContentItem]
 ) -> list[str]:
-    risks: list[str] = []
+    index_moves: list[tuple[float, str]] = []
+    fx_risks: list[str] = []
+    bond_risks: list[str] = []
+    sector_moves: list[tuple[float, str]] = []
+    news_risks: list[str] = []
+
     for fact in facts:
         if (
             fact.group in {"ashare", "us", "eu", "apac"}
             and fact.change_unit == "pct"
             and fact.change_num is not None
-            and fact.change_num <= -2
         ):
-            risks.append(f"{fact.label} 下跌 {fact.change}，需关注市场情绪。")
+            if fact.change_num <= -2:
+                index_moves.append(
+                    (
+                        abs(fact.change_num),
+                        f"{fact.label} 下跌 {fact.change}，需关注市场情绪。",
+                    )
+                )
+            elif abs(fact.change_num) >= 3:
+                index_moves.append(
+                    (
+                        abs(fact.change_num),
+                        f"{fact.label} 波动 {fact.change}，市场情绪放大。",
+                    )
+                )
+        if (
+            fact.group == "fx"
+            and fact.label == "美元指数"
+            and fact.change_num is not None
+            and abs(fact.change_num) >= 0.5
+        ):
+            fx_risks.append(
+                f"美元指数变动 {fact.change}，关注人民币与风险资产估值压力。"
+            )
         if (
             fact.id == "rate:DGS10"
             and fact.change_unit == "bp"
             and fact.change_num is not None
             and abs(fact.change_num) >= 10
         ):
-            risks.append(f"美国 10 年期国债单日变动 {fact.change}。")
+            bond_risks.append(f"美国 10 年期国债单日变动 {fact.change}。")
+        if (
+            fact.group == "sector"
+            and fact.change_unit == "pct"
+            and fact.change_num is not None
+        ):
+            if fact.change_num >= 3:
+                sector_moves.append(
+                    (
+                        abs(fact.change_num),
+                        f"{fact.label} 涨幅 {fact.change}，短期拥挤度较高，"
+                        "注意回调风险。",
+                    )
+                )
+            elif fact.change_num <= -2:
+                sector_moves.append(
+                    (
+                        abs(fact.change_num),
+                        f"{fact.label} 跌幅 {fact.change}，需关注资金流出。",
+                    )
+                )
+
     for item in news:
         if any(keyword in item.title for keyword in RISK_KEYWORDS):
-            risks.append(f"{item.title}（{_source_name(item)}）")
-    risks = list(dict.fromkeys(risks))
-    return risks[:3] if risks else ["暂无明显风险信号（规则判断）"]
+            news_risks.append(f"{item.title}（{_source_name(item)}）")
+
+    index_risks = [text for _, text in sorted(index_moves, reverse=True)]
+    sector_risks = [text for _, text in sorted(sector_moves, reverse=True)]
+    combined = (
+        index_risks[:2]
+        + fx_risks[:1]
+        + bond_risks[:1]
+        + sector_risks[:1]
+        + news_risks[:1]
+    )
+    combined = list(dict.fromkeys(combined))
+    return combined[:4] if combined else ["暂无明显风险信号（规则判断）"]
+
+
+def _sector_catalysts(
+    facts: Sequence[Fact], news: Sequence[ContentItem]
+) -> dict[str, str]:
+    """Match a news item to each sector; otherwise mark the catalyst missing."""
+    catalysts: dict[str, str] = {}
+    for fact in facts:
+        if fact.group != "sector":
+            continue
+        keyword = fact.label[:2] if len(fact.label) > 2 else fact.label
+        matched = None
+        for item in news:
+            text = f"{item.title} {item.content or ''}"
+            if fact.label in text or (len(keyword) >= 2 and keyword in text):
+                matched = item
+                break
+        if matched is not None:
+            catalysts[fact.label] = (
+                f"{_snippet(matched.content or matched.title)}"
+                f"（{_source_name(matched)}）"
+            )
+        else:
+            catalysts[fact.label] = "催化剂暂缺"
+    return catalysts
+
+
+COMMODITY_KEYWORDS = {
+    "WTI 原油": ("原油", "油价", "OPEC", "减产", "中东"),
+    "布伦特原油": ("原油", "油价", "OPEC", "减产", "中东"),
+    "COMEX 黄金": ("黄金", "贵金属", "美联储", "降息"),
+    "COMEX 白银": ("白银", "贵金属"),
+    "COMEX 铜": ("铜", "有色", "LME", "库存"),
+}
+
+
+def _with_commodity_notes(
+    facts: Sequence[Fact], news: Sequence[ContentItem]
+) -> list[Fact]:
+    """Attach a news-derived driver to each commodity row."""
+    result: list[Fact] = []
+    for fact in facts:
+        if fact.group == "commodity" and fact.status == "ok":
+            keywords = COMMODITY_KEYWORDS.get(fact.label, ())
+            matched = next(
+                (
+                    item
+                    for item in news
+                    if any(
+                        keyword in f"{item.title} {item.content or ''}"
+                        for keyword in keywords
+                    )
+                ),
+                None,
+            )
+            note = (
+                f"{_snippet(matched.content or matched.title)}"
+                f"（{_source_name(matched)}）"
+                if matched is not None
+                else "暂缺"
+            )
+            fact = fact.model_copy(update={"note": note})
+        result.append(fact)
+    return result
 
 
 def _commodity_summary(facts: Sequence[Fact]) -> str:
     by_label = {fact.label: fact for fact in facts}
     parts: list[str] = []
-    for label in ("WTI 原油", "COMEX 黄金", "美元指数"):
+    for label in (
+        "WTI 原油",
+        "布伦特原油",
+        "COMEX 黄金",
+        "COMEX 白银",
+        "美元指数",
+    ):
         fact = by_label.get(label)
         if fact is not None and fact.status == "ok":
             if fact.change:
@@ -222,7 +349,7 @@ def _notes(facts: Sequence[Fact]) -> dict[str, str]:
         else "A 股数据暂缺。"
     )
     rate_note = (
-        "美债收益率来自 FRED。"
+        "美债 2Y/10Y/30Y 收益率来自 FRED。"
         if any(fact.group == "rate" and fact.status == "ok" for fact in facts)
         else "利率数据暂缺。"
     )
@@ -233,7 +360,10 @@ def _notes(facts: Sequence[Fact]) -> dict[str, str]:
     return {
         "ashare_note": ashare_note,
         "rate_note": rate_note,
-        "commodity_note": "WTI 原油、COMEX 黄金与铜来自东方财富；布伦特原油暂缺。",
+        "commodity_note": (
+            "WTI 原油、布伦特原油、COMEX 黄金/白银与铜来自东方财富；"
+            "缺失项标暂缺。"
+        ),
     }
 
 
@@ -276,13 +406,14 @@ def build_morning_draft(
     max_material_items: int = 40,
 ) -> MorningDraft:
     """Build the morning report draft from facts and news."""
-    facts = list(snapshot.facts)
     unique_news = dedup_news(list(news))[:max_material_items]
+    facts = _with_commodity_notes(list(snapshot.facts), unique_news)
     us_market = describe_market(facts, US_LABELS)
     eu_market = describe_market(facts, EU_LABELS)
     apac_market = describe_market(facts, APAC_LABELS)
     policy_items = _policy_items(unique_news)
     risk_items = _risk_items(facts, unique_news)
+    sector_catalysts = _sector_catalysts(facts, unique_news)
 
     if trading.is_trading:
         trading_status = (
@@ -326,4 +457,5 @@ def build_morning_draft(
         sources=_sources(facts, policy_items),
         missing=_missing(snapshot, facts),
         captured_at=snapshot.captured_at,
+        sector_catalysts=sector_catalysts,
     )

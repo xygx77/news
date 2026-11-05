@@ -1,5 +1,14 @@
 {
-  "writer": "rule",
+  "writer": "ai",
+  "ai": {
+    "provider": "openai",
+    "model": "glm-4-flash",
+    "base_url": "https://open.bigmodel.cn/api/paas/v4",
+    "api_key_env": "ZHIPU_API_KEY",
+    "temperature": 0.2,
+    "max_tokens": 3000,
+    "languages": ["zh"]
+  },
   "daily": {
     "timezone": "Asia/Shanghai",
     "output_dir": "output/daily",

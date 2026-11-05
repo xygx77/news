@@ -37,8 +37,20 @@ EU = {
     "100.SX5E": "欧洲斯托克50",
 }
 APAC = {"100.N225": "日经225", "100.KS11": "韩国 KOSPI"}
-FX = {"100.UDI": "美元指数", "133.USDCNH": "美元兑离岸人民币"}
-COMMODITY = {"102.CL00Y": "WTI 原油", "101.GC00Y": "COMEX 黄金", "101.HG00Y": "COMEX 铜"}
+FX = {
+    "100.UDI": "美元指数",
+    "133.USDCNH": "美元兑离岸人民币",
+    "119.EURUSD": "欧元/美元",
+    "119.GBPUSD": "英镑/美元",
+    "119.USDJPY": "美元/日元",
+}
+COMMODITY = {
+    "102.CL00Y": "WTI 原油",
+    "112.B00Y": "布伦特原油",
+    "101.GC00Y": "COMEX 黄金",
+    "101.SI00Y": "COMEX 白银",
+    "101.HG00Y": "COMEX 铜",
+}
 
 
 def _direction(value: float) -> str:

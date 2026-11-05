@@ -36,6 +36,7 @@ from .render.laser import render_laser
 from .sources.laser import LaserCollection, collect_laser, dedup_candidates
 from .writer.draft import LaserDraft, MorningDraft
 from .writer.enrich import enrich_items
+from .writer.ai_finance import build_ai_morning_draft
 from .writer.rule_finance import build_morning_draft
 from .writer.rule_laser import build_laser_draft
 from .writer.scoring import (
@@ -293,6 +294,33 @@ async def run_daily(
             counts.update(finance_counts)
             health.update(finance_health)
             try:
+                if (
+                    config.writer == "ai"
+                    and config.ai is not None
+                    and not offline
+                ):
+                    morning = await build_ai_morning_draft(
+                        snapshot,
+                        finance_items,
+                        report_day=report_day,
+                        now=now,
+                        trading=trading,
+                        max_material_items=config.daily.finance.max_material_items,
+                        ai_config=config.ai,
+                    )
+                    counts["ai_finance"] = int(morning.ai_used)
+                else:
+                    morning = build_morning_draft(
+                        snapshot,
+                        finance_items,
+                        report_day=report_day,
+                        now=now,
+                        trading=trading,
+                        max_material_items=config.daily.finance.max_material_items,
+                    )
+            except Exception as exc:  # noqa: BLE001 - laser may still render
+                failures["writer:finance"] = _short_error(exc)
+                tracebacks.append(traceback.format_exc())
                 morning = build_morning_draft(
                     snapshot,
                     finance_items,
@@ -301,9 +329,6 @@ async def run_daily(
                     trading=trading,
                     max_material_items=config.daily.finance.max_material_items,
                 )
-            except Exception as exc:  # noqa: BLE001 - laser may still render
-                failures["writer:finance"] = _short_error(exc)
-                tracebacks.append(traceback.format_exc())
 
         if only != "finance" and config.daily.laser.enabled:
             try:

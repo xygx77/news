@@ -9,11 +9,14 @@ import webbrowser
 from datetime import date
 from pathlib import Path
 
+from dotenv import load_dotenv
+
 from .config import load_daily_config
 from .pipeline import run_daily
 
 
 def main(argv: list[str] | None = None) -> int:
+    load_dotenv()
     parser = argparse.ArgumentParser(
         prog="horizon-daily",
         description="Generate the daily finance and laser briefings.",
