@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>每日简报 | {{DATE_CN}}</title>
+  <style>
+    :root {
+      --ink: #252525;
+      --muted: #666;
+      --paper: #fff;
+      --bg: #f3f5f7;
+      --accent: #1a3a5c;
+      --accent-2: #2e5d8c;
+      --line: #dde3e8;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+      line-height: 1.7;
+    }
+    .wrap { max-width: 920px; margin: 0 auto; padding: 28px 18px 48px; }
+    header { margin: 0 0 22px; }
+    h1 { margin: 0; color: var(--accent); font-size: 26px; letter-spacing: 1px; }
+    .date { margin: 6px 0 0; color: var(--muted); font-size: 14px; }
+    .cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+    .card {
+      display: block;
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 20px;
+      color: inherit;
+      text-decoration: none;
+      transition: border-color .15s ease;
+    }
+    .card:hover { border-color: var(--accent-2); }
+    .card h2 { margin: 0 0 10px; color: var(--accent); font-size: 18px; }
+    .card ul { margin: 0; padding-left: 1.2em; }
+    .card li { margin: 0 0 6px; font-size: 14px; }
+    .card .more { display: inline-block; margin-top: 10px; color: var(--accent-2); font-size: 13px; }
+    .archive { margin-top: 30px; background: var(--paper); border: 1px solid var(--line); border-radius: 8px; padding: 20px; }
+    .archive h2 { margin: 0 0 12px; color: var(--accent); font-size: 18px; }
+    .archive h3 { margin: 16px 0 6px; color: var(--accent-2); font-size: 14px; }
+    .archive ul { margin: 0; padding-left: 1.2em; }
+    .archive li { margin: 0 0 5px; font-size: 14px; }
+    .archive a { color: var(--accent-2); }
+    footer { margin-top: 26px; color: var(--muted); font-size: 12px; }
+    @media (max-width: 680px) {
+      .cards { grid-template-columns: 1fr; }
+      h1 { font-size: 22px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>每日简报</h1>
+      <p class="date">{{DATE_CN}} · {{WEEKDAY_CN}}</p>
+    </header>
+    <main>
+      <div class="cards">
+        {{MORNING_CARD}}
+        {{LASER_CARD}}
+      </div>
+      <section class="archive">
+        <h2>归档</h2>
+        {{ARCHIVE}}
+      </section>
+      <footer>{{DISCLAIMER}}</footer>
+    </main>
+  </div>
+</body>
+</html>

@@ -1,0 +1,18 @@
+{
+  "data": {
+    "items": [
+      {
+        "id": 2001,
+        "display_time": 1793836000,
+        "uri": "https://wallstreetcn.com/livenews/2001",
+        "content_text": "<p>美国 10 年期国债收益率上行 4BP。</p>"
+      },
+      {
+        "id": 2002,
+        "display_time": 1793830000,
+        "uri": "https://wallstreetcn.com/livenews/2002",
+        "content_text": "<p>欧洲主要股指小幅收涨。</p>"
+      }
+    ]
+  }
+}

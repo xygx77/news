@@ -1,0 +1,237 @@
+{
+  "writer": "rule",
+  "daily": {
+    "timezone": "Asia/Shanghai",
+    "output_dir": "output/daily",
+    "finance": {
+      "enabled": true,
+      "max_material_items": 40
+    },
+    "laser": {
+      "enabled": true,
+      "window_hours": 48,
+      "fallback_window_hours": 72,
+      "min_items": 5,
+      "max_items": 8
+    }
+  },
+  "sources": {
+    "jin10": {
+      "enabled": true,
+      "limit": 100
+    },
+    "wallstreetcn": {
+      "enabled": true,
+      "channel": "global-channel",
+      "limit": 100
+    },
+    "rss": [
+      {
+        "name": "东方财富要闻",
+        "url": "http://rss.eastmoney.com/rss_partener.xml",
+        "enabled": true
+      }
+    ],
+    "cnfin": {
+      "enabled": false
+    },
+    "laser": [
+      {
+        "name": "激光制造网",
+        "strategy": "html_list",
+        "list_url": "https://www.laserfair.com/news/",
+        "base_url": "https://www.laserfair.com",
+        "url_pattern": "/\\d{6}/\\d{2}/\\d+\\.html",
+        "date_from_url": true,
+        "date_regex": "/(?P<y>\\d{4})(?P<m>\\d{2})/(?P<d>\\d{2})/",
+        "language": "zh",
+        "weight": 1.0,
+        "enabled": true
+      },
+      {
+        "name": "OFweek激光",
+        "strategy": "html_list",
+        "list_url": "https://laser.ofweek.com/",
+        "base_url": "https://laser.ofweek.com",
+        "url_pattern": "/20\\d{2}-\\d{2}/ART-[\\w-]+\\.html",
+        "date_from_url": true,
+        "date_regex": "/20(?P<y>\\d{2})-(?P<m>\\d{2})/",
+        "language": "zh",
+        "weight": 1.0,
+        "enabled": true
+      },
+      {
+        "name": "Industrysourcing激光频道",
+        "strategy": "html_list",
+        "list_url": "https://www.industrysourcing.cn/i/laser",
+        "base_url": "https://www.industrysourcing.cn",
+        "url_pattern": "/article/\\d+",
+        "date_from_url": false,
+        "language": "zh",
+        "weight": 1.0,
+        "enabled": true
+      },
+      {
+        "name": "European Optical Society",
+        "strategy": "html_list",
+        "list_url": "https://www.europeanoptics.org/news/",
+        "base_url": "https://www.europeanoptics.org",
+        "url_pattern": "/news/[a-z0-9-]+\\.html",
+        "date_from_url": false,
+        "language": "en",
+        "weight": 1.0,
+        "enabled": true
+      },
+      {
+        "name": "激光世界中文版",
+        "strategy": "html_list",
+        "list_url": "https://www.laserfocusworld.com.cn/",
+        "base_url": "https://www.laserfocusworld.com.cn",
+        "url_pattern": "De(IN|NP)\\.asp\\?id=\\d+",
+        "date_from_url": false,
+        "language": "zh",
+        "weight": 1.0,
+        "enabled": true
+      },
+      {
+        "name": "中国光学光电子行业协会",
+        "strategy": "html_list",
+        "list_url": "https://www.coema.org.cn/",
+        "base_url": "https://www.coema.org.cn",
+        "url_pattern": "/industry/\\d{6}/\\d+\\.html",
+        "date_from_url": true,
+        "date_regex": "/industry/(?P<y>\\d{4})(?P<m>\\d{2})/",
+        "language": "zh",
+        "weight": 1.0,
+        "enabled": true
+      },
+      {
+        "name": "Optics.org",
+        "strategy": "html_list",
+        "list_url": "https://optics.org/news",
+        "base_url": "https://optics.org",
+        "url_pattern": "/news/\\d+/[a-z0-9-]+",
+        "date_from_url": false,
+        "language": "en",
+        "weight": 1.0,
+        "enabled": true
+      },
+      {
+        "name": "Coherent",
+        "strategy": "sitemap",
+        "sitemap_url": "https://www.coherent.com/sitemap-coherentweb-en.xml",
+        "base_url": "https://www.coherent.com",
+        "url_pattern": "/news/press-releases/[^/]+$",
+        "date_from_url": false,
+        "language": "en",
+        "weight": 0.5,
+        "enabled": true
+      },
+      {
+        "name": "IPG Photonics",
+        "strategy": "sitemap",
+        "sitemap_url": "https://www.ipgphotonics.com/sitemap.xml",
+        "base_url": "https://www.ipgphotonics.com",
+        "url_pattern": "/newsroom/news/[^/]+$",
+        "date_from_url": false,
+        "language": "en",
+        "weight": 0.5,
+        "enabled": true
+      },
+      {
+        "name": "Jenoptik",
+        "strategy": "sitemap",
+        "sitemap_url": "https://www.jenoptik.com/sitemap.xml",
+        "base_url": "https://www.jenoptik.com",
+        "url_pattern": "/news/pressreleases/\\d{4}/\\d{2}/\\d{2}/[^/]+$",
+        "date_from_url": true,
+        "date_regex": "/(?P<y>\\d{4})/(?P<m>\\d{2})/(?P<d>\\d{2})/",
+        "language": "en",
+        "weight": 0.5,
+        "enabled": true
+      },
+      {
+        "name": "nLIGHT",
+        "strategy": "sitemap",
+        "sitemap_url": "https://www.nlight.net/sitemap.xml",
+        "base_url": "https://www.nlight.net",
+        "url_pattern": "/press-releases-content/[^/]+$",
+        "date_from_url": false,
+        "language": "en",
+        "weight": 0.5,
+        "enabled": true
+      },
+      {
+        "name": "大族激光",
+        "strategy": "sitemap",
+        "sitemap_url": "https://www.hanslaser.com/sitemap.xml",
+        "base_url": "https://www.hanslaser.com",
+        "url_pattern": "/(news-focus|news-status)/\\d+\\.html$",
+        "date_from_url": false,
+        "language": "zh",
+        "weight": 0.5,
+        "enabled": true
+      },
+      {
+        "name": "Lumentum",
+        "strategy": "custom",
+        "list_url": "https://www.lumentum.com/en/newsroom/news-releases",
+        "base_url": "https://www.lumentum.com",
+        "url_pattern": "news-details",
+        "adapter": "lumentum",
+        "date_from_url": false,
+        "language": "en",
+        "weight": 0.5,
+        "enabled": true
+      },
+      {
+        "name": "华工科技",
+        "strategy": "html_list",
+        "list_url": "https://www.hgtech.com.cn/gsxw/",
+        "base_url": "https://www.hgtech.com.cn",
+        "url_pattern": "/gsxw/\\d+\\.jhtml",
+        "date_from_url": false,
+        "language": "zh",
+        "weight": 0.5,
+        "enabled": true
+      },
+      {
+        "name": "ams OSRAM",
+        "strategy": "custom",
+        "enabled": false,
+        "reason": "页面 JS 渲染，待浏览器适配器"
+      },
+      {
+        "name": "Bystronic",
+        "strategy": "custom",
+        "enabled": false,
+        "reason": "页面 JS 渲染，待浏览器适配器"
+      },
+      {
+        "name": "Laser Focus World",
+        "strategy": "html_list",
+        "enabled": false,
+        "reason": "大陆直连 403"
+      },
+      {
+        "name": "TRUMPF",
+        "strategy": "sitemap",
+        "enabled": false,
+        "reason": "大陆直连 403"
+      },
+      {
+        "name": "MKS / Raycus / JPT",
+        "strategy": "custom",
+        "enabled": false,
+        "reason": "大陆直连超时"
+      }
+    ]
+  },
+  "market": {
+    "indices": ["000001", "399001", "399006", "000688", "000300"],
+    "sectors": {
+      "enabled": true,
+      "top_n": 5
+    }
+  }
+}

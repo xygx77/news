@@ -1,0 +1,9 @@
+{
+  "https://flash-api.jin10.com/": "jin10.json",
+  "https://api-one.wallstcn.com/": "wallstreetcn.json",
+  "http://rss.eastmoney.com/rss_partener.xml": "rss_eastmoney.xml",
+  "https://www.laserfair.com/news/": "laser_laserfair.html",
+  "https://laser.ofweek.com/": "laser_ofweek.html",
+  "https://www.coherent.com/sitemap-coherentweb-en.xml": "sitemap_coherent.xml",
+  "https://datacenter-web.eastmoney.com/api/data/v1/get": "calendar_payload.json"
+}
