@@ -338,7 +338,18 @@ def _ashare_summary(facts: Sequence[Fact], trading: TradingDayInfo) -> str:
     ]
     if not parts:
         return "A 股主要指数数据暂缺。"
-    return f"A 股收盘：{'，'.join(parts)}。"
+    summary = f"A 股收盘：{'，'.join(parts)}。"
+    breadth = next(
+        (
+            fact
+            for fact in facts
+            if fact.group == "breadth" and fact.status == "ok"
+        ),
+        None,
+    )
+    if breadth is not None:
+        summary += f"全市场{breadth.value}。"
+    return summary
 
 
 def _notes(facts: Sequence[Fact]) -> dict[str, str]:

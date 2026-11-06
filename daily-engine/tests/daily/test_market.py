@@ -1,4 +1,13 @@
-from src.daily.market.eastmoney import parse_clist, parse_ulist
+import asyncio
+
+import httpx
+
+from src.daily.market.eastmoney import (
+    fetch_breadth,
+    parse_breadth,
+    parse_clist,
+    parse_ulist,
+)
 from src.daily.market.rates import parse_fred_csv
 
 
@@ -67,3 +76,85 @@ def test_parse_clist_formats_sector_rows():
     facts = parse_clist(payload, as_of="2026-11-04 收盘")
     assert facts[0].group == "sector"
     assert facts[0].change == "+3.21%"
+
+
+def test_parse_breadth_sums_buckets():
+    payload = {
+        "data": {
+            "qdate": 20261106,
+            "fenbu": [
+                {"-11": 1},
+                {"-1": 1251},
+                {"0": 101},
+                {"1": 470},
+                {"2": 196},
+            ],
+        }
+    }
+    fact = parse_breadth(payload)
+    assert fact is not None
+    assert fact.group == "breadth"
+    assert fact.label == "涨跌家数"
+    assert fact.value == "上涨 666 家、下跌 1252 家、平盘 101 家"
+    assert fact.direction == "down"
+    assert fact.note == "含北交所，样本 2019 只，数据截至 2026-11-06"
+    assert fact.source_name == "东方财富"
+
+
+def test_parse_breadth_returns_none_without_samples():
+    assert parse_breadth({"data": {"fenbu": []}}) is None
+    assert parse_breadth({"data": {}}) is None
+    assert parse_breadth({}) is None
+
+
+def test_fetch_breadth_requests_distribution_endpoint():
+    calls: list[httpx.URL] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        calls.append(request.url)
+        return httpx.Response(
+            200,
+            json={"data": {"qdate": 20261106, "fenbu": [{"1": 7}, {"-1": 3}, {"0": 1}]}},
+        )
+
+    async def run():
+        async with httpx.AsyncClient(
+            transport=httpx.MockTransport(handler)
+        ) as client:
+            return await fetch_breadth(client)
+
+    fact = asyncio.run(run())
+    assert fact is not None
+    assert calls[0].host == "push2ex.eastmoney.com"
+    assert calls[0].path == "/getTopicZDFenBu"
+    assert calls[0].params["dpt"] == "wz.ztzt"
+    assert fact.value == "上涨 7 家、下跌 3 家、平盘 1 家"
+
+
+def test_snapshot_includes_breadth_fact():
+    from src.daily.config import MarketSettings
+    from src.daily.market.snapshot import fetch_market_snapshot
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path == "/getTopicZDFenBu":
+            return httpx.Response(
+                200,
+                json={
+                    "data": {
+                        "qdate": 20261106,
+                        "fenbu": [{"1": 860}, {"-1": 4418}, {"0": 101}],
+                    }
+                },
+            )
+        return httpx.Response(200, json={"data": {"diff": []}})
+
+    async def run():
+        async with httpx.AsyncClient(
+            transport=httpx.MockTransport(handler)
+        ) as client:
+            return await fetch_market_snapshot(client, MarketSettings())
+
+    snapshot = asyncio.run(run())
+    breadth = [fact for fact in snapshot.facts if fact.id == "breadth:cn"]
+    assert len(breadth) == 1
+    assert breadth[0].value == "上涨 860 家、下跌 4418 家、平盘 101 家"

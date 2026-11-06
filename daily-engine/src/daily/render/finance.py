@@ -226,6 +226,14 @@ def _values(draft: MorningDraft) -> Mapping[str, str]:
         (fact.value for fact in draft.facts if fact.group == "turnover"),
         "暂缺",
     )
+    breadth = next(
+        (
+            fact.value
+            for fact in draft.facts
+            if fact.group == "breadth" and fact.status == "ok"
+        ),
+        None,
+    )
     missing_text = "、".join(draft.missing) if draft.missing else "无"
     captured = draft.captured_at.strftime("%Y-%m-%d %H:%M")
 
@@ -244,6 +252,9 @@ def _values(draft: MorningDraft) -> Mapping[str, str]:
         ),
         "ASHARE_SOURCES": _source_links(ashare),
         "TURNOVER": _escape(turnover),
+        "BREADTH": _escape(
+            f"全市场{breadth}" if breadth else "全市场涨跌家数暂缺"
+        ),
         "ASHARE_NOTE": _escape(draft.notes.get("ashare_note", "")),
         "RATE_ROWS": render_fact_rows(rates, ("label", "value", "change", "note")),
         "RATE_SOURCES": _source_links(rates),

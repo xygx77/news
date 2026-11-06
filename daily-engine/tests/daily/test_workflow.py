@@ -11,7 +11,7 @@ def test_workflow_schedule_and_paths():
     assert "contents: write" in text
     assert "git pull --rebase --autostash" in text
     assert "fetch-depth: 0" in text
-    assert "astral-sh/setup-uv@v10" in text
+    assert "astral-sh/setup-uv@v10.3.3" in text
 
 
 def test_sync_script_covers_required_paths():

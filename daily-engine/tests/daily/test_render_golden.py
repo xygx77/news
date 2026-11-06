@@ -245,3 +245,17 @@ def test_render_laser_truncates_long_chinese_title(tmp_path):
     text = out.read_text(encoding="utf-8")
     assert "激" * 40 not in text
     assert "激" * 30 + "…" in text
+
+
+def test_render_morning_shows_breadth_sentence(tmp_path):
+    from tests.daily.factories import fixed_morning_draft
+
+    draft = fixed_morning_draft()
+    out = tmp_path / "morning.html"
+    render_morning(
+        draft,
+        template_path=ROOT / "templates/daily/morning.html",
+        output_path=out,
+    )
+    text = out.read_text(encoding="utf-8")
+    assert "全市场上涨 860 家、下跌 4418 家、平盘 101 家" in text

@@ -18,6 +18,7 @@ from .eastmoney import (
     FX,
     HK,
     US,
+    fetch_breadth,
     fetch_quotes,
     fetch_sectors,
     fetch_turnover,
@@ -68,6 +69,7 @@ async def fetch_market_snapshot(
     }
     if turnover_secids:
         tasks["成交额"] = fetch_turnover(client, turnover_secids)
+    tasks["涨跌家数"] = fetch_breadth(client)
 
     names = list(tasks)
     results = await asyncio.gather(*tasks.values(), return_exceptions=True)

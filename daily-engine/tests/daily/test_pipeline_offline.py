@@ -47,6 +47,7 @@ def test_offline_pipeline_generates_all_pages(tmp_path, monkeypatch):
 
     morning = (tmp_path / "2026-11-05/morning.html").read_text(encoding="utf-8")
     assert "央行开展 5000 亿元逆回购操作" in morning
+    assert "全市场上涨" in morning
     laser = (tmp_path / "2026-11-05/laser.html").read_text(encoding="utf-8")
     assert "大族激光完成 10 亿元并购融资" in laser
 

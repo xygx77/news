@@ -324,3 +324,31 @@ def test_filter_by_window_drops_stale_enriched_items():
     )
     result = filter_by_window([old, fresh], now=NOW, window_hours=48)
     assert [item.title for item in result] == ["fresh"]
+
+
+def test_morning_draft_includes_breadth_in_key_point():
+    snapshot = MarketSnapshot(
+        facts=[
+            _fact("上证指数", "3388.81", "+1.23%", group="ashare"),
+            _fact(
+                "涨跌家数",
+                "上涨 860 家、下跌 4418 家、平盘 101 家",
+                None,
+                group="breadth",
+            ),
+        ],
+        captured_at=NOW,
+    )
+    trading = TradingDayInfo(
+        day=date(2026, 11, 5),
+        is_trading=True,
+        previous=date(2026, 11, 4),
+        verified=True,
+    )
+    draft = build_morning_draft(
+        snapshot, [], report_day=date(2026, 11, 5), now=NOW, trading=trading
+    )
+    assert draft.key_points[0] == (
+        "A 股收盘：上证指数 3388.81（+1.23%）。"
+        "全市场上涨 860 家、下跌 4418 家、平盘 101 家。"
+    )

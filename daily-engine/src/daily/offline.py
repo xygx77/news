@@ -9,6 +9,7 @@ import httpx
 
 ULIST_URL = "https://push2.eastmoney.com/api/qt/ulist.np/get"
 CLIST_URL = "https://push2.eastmoney.com/api/qt/clist/get"
+BREADTH_URL = "https://push2ex.eastmoney.com/getTopicZDFenBu"
 FRED_CSV_URL = "https://fred.stlouisfed.org/graph/fredgraph.csv"
 CALENDAR_URL = "https://data.eastmoney.com/cjrl/"
 KLINE_PREFIX = "https://push2his.eastmoney.com/"
@@ -45,6 +46,8 @@ def build_offline_client(fixtures_dir: Path) -> httpx.AsyncClient:
             return httpx.Response(200, json={"data": {"diff": diff}})
         if url.startswith(CLIST_URL):
             return fixture("eastmoney_clist.json")
+        if url.startswith(BREADTH_URL):
+            return fixture("eastmoney_breadth.json")
         if url.startswith(FRED_CSV_URL):
             series_id = request.url.params.get("id", "DGS10")
             return fixture(f"fred_{series_id}.csv")

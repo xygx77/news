@@ -84,6 +84,7 @@ def fixed_morning_draft() -> MorningDraft:
         _fact("sector:BK003", "sector", "房地产", "-1.88%", "-1.88%", -1.88, "pct", "down"),
         _fact("sector:BK004", "sector", "煤炭", "-1.25%", "-1.25%", -1.25, "pct", "down"),
         _fact("turnover:cn", "turnover", "两市成交额", "1.86 亿元", None, 0.0, "abs", "flat", note="由沪深两市成交额求和"),
+        _fact("breadth:cn", "breadth", "涨跌家数", "上涨 860 家、下跌 4418 家、平盘 101 家", None, 0.0, "abs", "down", note="含北交所，样本 5379 只，数据截至 2026-11-04"),
     ]
     calendar = [
         CalendarEvent(time="09:30", title="中国 10 月 CPI", importance="高"),

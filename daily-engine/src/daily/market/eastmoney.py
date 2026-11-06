@@ -11,6 +11,8 @@ from .schema import Fact
 
 ULIST_URL = "https://push2.eastmoney.com/api/qt/ulist.np/get"
 CLIST_URL = "https://push2.eastmoney.com/api/qt/clist/get"
+BREADTH_URL = "https://push2ex.eastmoney.com/getTopicZDFenBu"
+BREADTH_UT = "7eea3edcaed734bea9cbfc24409ed989"
 QUOTE_SOURCE_URL = "https://quote.eastmoney.com/"
 SOURCE_NAME = "东方财富"
 
@@ -250,3 +252,65 @@ async def fetch_turnover(
         source_url=QUOTE_SOURCE_URL,
         as_of="上一交易日收盘",
     )
+
+
+def _format_qdate(raw: Any) -> str:
+    text = str(raw or "")
+    if len(text) == 8 and text.isdigit():
+        return f"{text[:4]}-{text[4:6]}-{text[6:]}"
+    return ""
+
+
+def parse_breadth(payload: dict[str, Any]) -> Fact | None:
+    """Count advancers, decliners and unchanged stocks from the distribution."""
+    data = payload.get("data") or {}
+    up = down = flat = 0
+    for bucket in data.get("fenbu") or []:
+        if not isinstance(bucket, dict):
+            continue
+        for key, count in bucket.items():
+            try:
+                pct = int(key)
+                value = int(count)
+            except (TypeError, ValueError):
+                continue
+            if pct > 0:
+                up += value
+            elif pct < 0:
+                down += value
+            else:
+                flat += value
+    total = up + down + flat
+    if total == 0:
+        return None
+    note = f"含北交所，样本 {total} 只"
+    qdate = _format_qdate(data.get("qdate"))
+    if qdate:
+        note += f"，数据截至 {qdate}"
+    return Fact(
+        id="breadth:cn",
+        group="breadth",
+        label="涨跌家数",
+        value=f"上涨 {up} 家、下跌 {down} 家、平盘 {flat} 家",
+        direction=_direction(up - down),
+        note=note,
+        source_name=SOURCE_NAME,
+        source_url=QUOTE_SOURCE_URL,
+        as_of="上一交易日收盘",
+    )
+
+
+async def fetch_breadth(client: httpx.AsyncClient) -> Fact | None:
+    """Fetch whole-market advance/decline counts for the latest session."""
+    payload = await _get_json(
+        client,
+        BREADTH_URL,
+        params={
+            "ut": BREADTH_UT,
+            "dpt": "wz.ztzt",
+            "Pageindex": 0,
+            "pagesize": 30,
+            "sort": "f3",
+        },
+    )
+    return parse_breadth(payload)
