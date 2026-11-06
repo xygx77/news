@@ -22,6 +22,7 @@ from .rule_finance import (
     _source_name,
     build_morning_draft,
     dedup_news,
+    rank_news,
 )
 
 logger = logging.getLogger(__name__)
@@ -292,7 +293,6 @@ def _rule_briefs(
         text = f"{_plain(item.title)} {item.content or ''}"
         if any(keyword in text for keyword in keywords):
             matches.append(item)
-    matches.sort(key=lambda item: item.published_at, reverse=True)
     briefs: list[NewsBrief] = []
     for item in matches[:limit]:
         briefs.append(
@@ -318,6 +318,7 @@ def _policy_sections(
     }
     result: dict[str, list[NewsBrief]] = {}
     used_urls: set[str] = set()
+    rank_order = {str(item.url): index for index, item in enumerate(news)}
     for label, key in _SECTION_LABELS:
         items = payload.get(key) or []
         briefs: list[NewsBrief] = []
@@ -331,6 +332,7 @@ def _policy_sections(
         briefs.extend(
             _rule_briefs(news, keyword_map[label], used_urls, remaining)
         )
+        briefs.sort(key=lambda brief: rank_order.get(str(brief.url), len(news)))
         result[label] = briefs
     return result if any(result.values()) else {}
 
@@ -417,12 +419,11 @@ def _merge(
                 notes[key] = _plain(value)[:300]
 
     sources = list(baseline.sources)
-    seen = {(source.name, source.url) for source in sources}
+    seen = {source.name for source in sources}
     for briefs in sections.values():
         for brief in briefs:
-            key = (brief.source_name, brief.url)
-            if key not in seen:
-                seen.add(key)
+            if brief.source_name not in seen:
+                seen.add(brief.source_name)
                 sources.append(
                     SourceRef(
                         name=brief.source_name,
@@ -464,7 +465,14 @@ async def build_ai_morning_draft(
     client: Any | None = None,
 ) -> MorningDraft:
     """Build a morning draft, enriching narrative fields with AI when possible."""
-    unique_news = dedup_news(list(news))[:max_material_items]
+    sector_labels = [
+        fact.label
+        for fact in snapshot.facts
+        if fact.group == "sector" and fact.status == "ok"
+    ]
+    unique_news = rank_news(
+        dedup_news(list(news)), now=now, sector_labels=sector_labels
+    )[:max_material_items]
     baseline = build_morning_draft(
         snapshot,
         unique_news,

@@ -184,3 +184,71 @@ def test_ai_invented_numbers_are_rejected_per_field():
     )
     assert draft.ai_used is True
     assert "99999.99" not in draft.us_market
+
+
+def test_ai_merge_lists_each_platform_once():
+    from src.daily.writer.ai_finance import _merge
+
+    base = fixed_morning_draft()
+    news = [
+        ContentItem(
+            id="rss:ai:11",
+            source_type=SourceType.RSS,
+            title="央行开展 5000 亿元逆回购",
+            url="https://wallstreetcn.com/live/11",
+            content="央行开展逆回购操作。",
+            published_at=NOW,
+            metadata={"feed_name": "华尔街见闻"},
+        ),
+        ContentItem(
+            id="rss:ai:12",
+            source_type=SourceType.RSS,
+            title="财政部发布专项债通知",
+            url="https://wallstreetcn.com/live/12",
+            content="财政部发布专项债通知。",
+            published_at=NOW,
+            metadata={"feed_name": "华尔街见闻"},
+        ),
+    ]
+    payload = {
+        "policy": [
+            {"title": "央行开展 5000 亿元逆回购", "summary": "", "source": "华尔街见闻"},
+            {"title": "财政部发布专项债通知", "summary": "", "source": "华尔街见闻"},
+        ]
+    }
+    merged = _merge(base, payload, news)
+    names = [source.name for source in merged.sources]
+    assert names.count("华尔街见闻") == 1
+
+
+def test_ai_policy_items_follow_impact_order():
+    from src.daily.writer.ai_finance import _merge
+
+    base = fixed_morning_draft()
+    important = ContentItem(
+        id="rss:ai:21",
+        source_type=SourceType.RSS,
+        title="央行宣布降息 25 个基点",
+        url="https://example.com/news/21",
+        content="央行宣布降息。",
+        published_at=NOW - __import__("datetime").timedelta(hours=5),
+        metadata={"feed_name": "东方财富要闻"},
+    )
+    ordinary = ContentItem(
+        id="rss:ai:22",
+        source_type=SourceType.RSS,
+        title="某公司发布回购公告",
+        url="https://example.com/news/22",
+        content="某公司发布回购公告。",
+        published_at=NOW - __import__("datetime").timedelta(hours=1),
+        metadata={"feed_name": "东方财富要闻"},
+    )
+    payload = {
+        "policy": [
+            {"title": "某公司发布回购公告", "summary": "", "source": "东方财富要闻"},
+            {"title": "央行宣布降息 25 个基点", "summary": "", "source": "东方财富要闻"},
+        ]
+    }
+    merged = _merge(base, payload, [important, ordinary])
+    briefs = merged.policy_sections["政策"]
+    assert briefs[0].title == "央行宣布降息 25 个基点"

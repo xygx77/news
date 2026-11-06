@@ -158,3 +158,42 @@ def test_snapshot_includes_breadth_fact():
     breadth = [fact for fact in snapshot.facts if fact.id == "breadth:cn"]
     assert len(breadth) == 1
     assert breadth[0].value == "上涨 860 家、下跌 4418 家、平盘 101 家"
+
+
+def test_parse_china_bond_yields_reads_latest_and_previous():
+    from src.daily.market.rates import parse_china_bond_yields
+
+    html = """
+    <table>
+      <tr><th>曲线名称</th><th>日期</th><th>3 月</th><th>6 月</th><th>1 年</th>
+          <th>3 年</th><th>5 年</th><th>7 年</th><th>10 年</th><th>30 年</th></tr>
+      <tr><td>中债国债收益率曲线</td><td>2026-11-04</td><td>1.10</td><td>1.15</td>
+          <td>1.20</td><td>1.25</td><td>1.30</td><td>1.40</td><td>1.6000</td><td>2.0400</td></tr>
+      <tr><td>中债国债收益率曲线</td><td>2026-11-05</td><td>1.11</td><td>1.16</td>
+          <td>1.21</td><td>1.26</td><td>1.31</td><td>1.41</td><td>1.6038</td><td>2.0470</td></tr>
+      <tr><td>中债企业债收益率曲线(AAA)</td><td>2026-11-05</td><td>1.30</td><td>1.35</td>
+          <td>1.40</td><td>1.45</td><td>1.50</td><td>1.60</td><td>1.80</td><td>2.20</td></tr>
+    </table>
+    """
+    facts = parse_china_bond_yields(html)
+    assert [fact.label for fact in facts] == ["中国 10 年期国债", "中国 30 年期国债"]
+    assert facts[0].value == "1.60%"
+    assert facts[0].change == "+0.4BP"
+    assert facts[0].as_of == "2026-11-05"
+    assert facts[1].value == "2.05%"
+    assert facts[1].change == "+0.7BP"
+
+
+def test_fetch_china_bond_yields_returns_empty_on_error():
+    from src.daily.market.rates import fetch_china_bond_yields
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(503, text="unavailable")
+
+    async def run():
+        async with httpx.AsyncClient(
+            transport=httpx.MockTransport(handler)
+        ) as client:
+            return await fetch_china_bond_yields(client)
+
+    assert asyncio.run(run()) == []

@@ -259,3 +259,35 @@ def test_render_morning_shows_breadth_sentence(tmp_path):
     )
     text = out.read_text(encoding="utf-8")
     assert "全市场上涨 860 家、下跌 4418 家、平盘 101 家" in text
+
+
+def test_render_morning_hides_missing_china_bond_rows(tmp_path):
+    from tests.daily.factories import fixed_morning_draft
+
+    draft = fixed_morning_draft()
+    draft.facts = [
+        fact for fact in draft.facts if not fact.id.startswith("rate:cn")
+    ]
+    out = tmp_path / "morning.html"
+    render_morning(
+        draft,
+        template_path=ROOT / "templates/daily/morning.html",
+        output_path=out,
+    )
+    text = out.read_text(encoding="utf-8")
+    assert "中国 10 年期国债" not in text
+    assert "中国 30 年期国债" not in text
+
+
+def test_render_morning_shows_china_bond_when_available(tmp_path):
+    from tests.daily.factories import fixed_morning_draft
+
+    draft = fixed_morning_draft()
+    out = tmp_path / "morning.html"
+    render_morning(
+        draft,
+        template_path=ROOT / "templates/daily/morning.html",
+        output_path=out,
+    )
+    text = out.read_text(encoding="utf-8")
+    assert "中国 10 年期国债" in text and "1.60%" in text

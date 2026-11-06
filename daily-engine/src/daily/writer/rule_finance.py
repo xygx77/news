@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import re
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from typing import Sequence
 
 from bs4 import BeautifulSoup
@@ -101,13 +101,19 @@ def _snippet(text: str | None, limit: int = 80) -> str:
     return sentence
 
 
+PLATFORM_NAMES = {
+    "wallstreetcn": "华尔街见闻",
+    "jin10": "金十数据",
+}
+
+
 def _source_name(item: ContentItem) -> str:
     metadata = item.metadata or {}
     for key in ("feed_name", "source_name"):
         value = metadata.get(key)
         if value:
             return str(value)
-    return item.source_type.value
+    return PLATFORM_NAMES.get(item.source_type.value, item.source_type.value)
 
 
 def dedup_news(
@@ -133,6 +139,100 @@ def dedup_news(
         kept.append(item)
         seen_urls.add(key)
     return kept
+
+
+IMPACT_KEYWORDS = (
+    "央行",
+    "降准",
+    "降息",
+    "加息",
+    "财政部",
+    "证监会",
+    "国务院",
+    "关税",
+    "CPI",
+    "PMI",
+    "GDP",
+    "非农",
+    "就业",
+    "MLF",
+    "LPR",
+    "专项债",
+    "财政",
+)
+MARKET_KEYWORDS = (
+    "暴跌",
+    "暴涨",
+    "涨停",
+    "跌停",
+    "违约",
+    "制裁",
+    "冲突",
+    "上调",
+    "下调",
+    "评级",
+    "回购",
+    "增持",
+    "减持",
+    "并购",
+    "重组",
+    "退市",
+    "IPO",
+    "解禁",
+)
+_PERCENT_RE = re.compile(r"([+-]?\d+(?:\.\d+)?)\s*%")
+
+
+def _impact_score(
+    item: ContentItem, now: datetime, sector_labels: Sequence[str]
+) -> int:
+    """Score how much a news item is likely to move financial markets."""
+    text = f"{item.title} {(item.content or '')[:300]}"
+    score = 0
+    score += min(6, 3 * sum(1 for keyword in IMPACT_KEYWORDS if keyword in text))
+    score += min(6, 3 * sum(1 for keyword in MARKET_KEYWORDS if keyword in text))
+    moves = [abs(float(value)) for value in _PERCENT_RE.findall(text)]
+    if moves and max(moves) >= 3:
+        score += 2
+    if "亿" in text:
+        score += 1
+    score += min(
+        4, 2 * sum(1 for label in sector_labels if label and label in text)
+    )
+    try:
+        age_hours = (now - item.published_at).total_seconds() / 3600
+    except TypeError:
+        age_hours = 0.0
+    if age_hours <= 2:
+        score += 2
+    elif age_hours <= 6:
+        score += 1
+    return score
+
+
+def rank_news(
+    items: Sequence[ContentItem],
+    *,
+    now: datetime | None = None,
+    sector_labels: Sequence[str] = (),
+) -> list[ContentItem]:
+    """Order news by likely market impact, newest first on ties."""
+    moment = now or datetime.now(timezone.utc)
+
+    def published(item: ContentItem) -> datetime:
+        value = item.published_at
+        return value if value.tzinfo is not None else value.replace(
+            tzinfo=timezone.utc
+        )
+
+    return sorted(
+        items,
+        key=lambda item: (
+            _impact_score(item, moment, sector_labels),
+            published(item),
+        ),
+        reverse=True,
+    )
 
 
 def _policy_items(news: Sequence[ContentItem]) -> list[NewsBrief]:
@@ -364,10 +464,6 @@ def _notes(facts: Sequence[Fact]) -> dict[str, str]:
         if any(fact.group == "rate" and fact.status == "ok" for fact in facts)
         else "利率数据暂缺。"
     )
-    if any(
-        fact.label.startswith("中国") and fact.status == "missing" for fact in facts
-    ):
-        rate_note += "中国国债收益率暂缺。"
     return {
         "ashare_note": ashare_note,
         "rate_note": rate_note,
@@ -380,13 +476,12 @@ def _notes(facts: Sequence[Fact]) -> dict[str, str]:
 
 def _sources(facts: Sequence[Fact], policy: Sequence[NewsBrief]) -> list[SourceRef]:
     refs: list[SourceRef] = []
-    seen: set[tuple[str, str]] = set()
+    seen_names: set[str] = set()
 
     def add(name: str, url: str, note: str) -> None:
-        key = (name, url)
-        if key in seen:
+        if name in seen_names:
             return
-        seen.add(key)
+        seen_names.add(name)
         refs.append(SourceRef(name=name, url=url, note=note))
 
     for fact in facts:
@@ -417,7 +512,14 @@ def build_morning_draft(
     max_material_items: int = 40,
 ) -> MorningDraft:
     """Build the morning report draft from facts and news."""
-    unique_news = dedup_news(list(news))[:max_material_items]
+    sector_labels = [
+        fact.label
+        for fact in snapshot.facts
+        if fact.group == "sector" and fact.status == "ok"
+    ]
+    unique_news = rank_news(
+        dedup_news(list(news)), now=now, sector_labels=sector_labels
+    )[:max_material_items]
     facts = _with_commodity_notes(list(snapshot.facts), unique_news)
     us_market = describe_market(facts, US_LABELS)
     eu_market = describe_market(facts, EU_LABELS)

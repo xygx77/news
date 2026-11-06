@@ -96,13 +96,6 @@ async def fetch_market_snapshot(
             fact.label == label and fact.status == "ok" for fact in facts
         ):
             missing.append(label)
-    if not any(
-        fact.group == "rate"
-        and fact.label.startswith("中国")
-        and fact.status == "ok"
-        for fact in facts
-    ):
-        missing.append("中国国债")
 
     if not any(fact.label == "布伦特原油" for fact in facts):
         facts.append(

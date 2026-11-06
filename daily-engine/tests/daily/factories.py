@@ -77,8 +77,8 @@ def fixed_morning_draft() -> MorningDraft:
         _fact("rate:DGS2", "rate", "美国 2 年期国债", "4.80%", "+2BP", 2.0, "bp", "up", source_name="FRED", source_url="https://fred.stlouisfed.org/series/DGS2", as_of="2026-11-04"),
         _fact("rate:DGS10", "rate", "美国 10 年期国债", "4.95%", "+4BP", 4.0, "bp", "up", source_name="FRED", source_url="https://fred.stlouisfed.org/series/DGS10", as_of="2026-11-03"),
         _fact("rate:DGS30", "rate", "美国 30 年期国债", "5.12%", "+2BP", 2.0, "bp", "up", source_name="FRED", source_url="https://fred.stlouisfed.org/series/DGS30", as_of="2026-11-03"),
-        _fact("rate:cn10y", "rate", "中国 10 年期国债", "暂缺", "暂缺", 0.0, "bp", "flat", status="missing", source_name="暂缺", source_url="https://www.chinabond.com.cn/", as_of="暂缺"),
-        _fact("rate:cn30y", "rate", "中国 30 年期国债", "暂缺", "暂缺", 0.0, "bp", "flat", status="missing", source_name="暂缺", source_url="https://www.chinabond.com.cn/", as_of="暂缺"),
+        _fact("rate:cn10y", "rate", "中国 10 年期国债", "1.60%", "+0.4BP", 0.4, "bp", "up", source_name="中国债券信息网", source_url="https://yield.chinabond.com.cn/", as_of="2026-11-04"),
+        _fact("rate:cn30y", "rate", "中国 30 年期国债", "2.05%", "+0.7BP", 0.7, "bp", "up", source_name="中国债券信息网", source_url="https://yield.chinabond.com.cn/", as_of="2026-11-04"),
         _fact("sector:BK001", "sector", "半导体", "+3.21%", "+3.21%", 3.21, "pct", "up"),
         _fact("sector:BK002", "sector", "通信设备", "+2.12%", "+2.12%", 2.12, "pct", "up"),
         _fact("sector:BK003", "sector", "房地产", "-1.88%", "-1.88%", -1.88, "pct", "down"),
@@ -104,7 +104,7 @@ def fixed_morning_draft() -> MorningDraft:
     snapshot = MarketSnapshot(
         facts=facts,
         calendar=calendar,
-        missing=["布伦特原油", "中国 10 年期国债"],
+        missing=["布伦特原油"],
         captured_at=NOW,
     )
     trading = TradingDayInfo(

@@ -352,3 +352,151 @@ def test_morning_draft_includes_breadth_in_key_point():
         "A 股收盘：上证指数 3388.81（+1.23%）。"
         "全市场上涨 860 家、下跌 4418 家、平盘 101 家。"
     )
+
+
+def _news(title, content, published_at, source_name="东方财富要闻", url=None):
+    return ContentItem(
+        id=f"test:{title}",
+        source_type=SourceType.RSS,
+        title=title,
+        url=url or f"https://example.com/{abs(hash(title))}",
+        content=content,
+        published_at=published_at,
+        metadata={"feed_name": source_name},
+    )
+
+
+def test_rank_news_puts_market_moving_items_first():
+    from src.daily.writer.rule_finance import rank_news
+
+    policy = _news(
+        "央行宣布降准 50 个基点",
+        "释放长期资金约 1 万亿元，市场流动性明显改善。",
+        NOW - timedelta(hours=3),
+        "华尔街见闻",
+    )
+    noise = _news("某科技公司发布新品", "正文内容" * 2000, NOW - timedelta(hours=1))
+    ranked = rank_news([noise, policy], now=NOW)
+    assert ranked[0].title == "央行宣布降准 50 个基点"
+
+
+def test_rank_news_prefers_recent_when_scores_tie():
+    from src.daily.writer.rule_finance import rank_news
+
+    fresh = _news("市场消息一", "", NOW - timedelta(hours=1))
+    stale = _news("市场消息二", "", NOW - timedelta(hours=10))
+    ranked = rank_news([stale, fresh], now=NOW)
+    assert ranked[0].title == "市场消息一"
+
+
+def test_rank_news_boosts_configured_sectors():
+    from src.daily.writer.rule_finance import rank_news
+
+    sector = _news("半导体设备订单大增", "", NOW - timedelta(hours=2))
+    other = _news("某地举办展会", "", NOW - timedelta(hours=2))
+    ranked = rank_news([other, sector], now=NOW, sector_labels=("半导体",))
+    assert ranked[0].title == "半导体设备订单大增"
+
+
+def test_morning_draft_selects_important_news_before_cap():
+    important = _news("央行宣布降息 25 个基点", "", NOW - timedelta(hours=5))
+    noise = _news("某公司举办发布会", "长文" * 3000, NOW - timedelta(hours=1))
+    trading = TradingDayInfo(
+        day=date(2026, 11, 5),
+        is_trading=True,
+        previous=date(2026, 11, 4),
+        verified=True,
+    )
+    draft = build_morning_draft(
+        MarketSnapshot(facts=[], captured_at=NOW),
+        [noise, important],
+        report_day=date(2026, 11, 5),
+        now=NOW,
+        trading=trading,
+        max_material_items=1,
+    )
+    assert [brief.title for brief in draft.policy_items] == [
+        "央行宣布降息 25 个基点"
+    ]
+
+
+def test_morning_draft_lists_each_platform_once():
+    first = _news(
+        "央行开展 5000 亿元逆回购",
+        "",
+        NOW - timedelta(hours=1),
+        "华尔街见闻",
+        url="https://wallstreetcn.com/live/1",
+    )
+    second = _news(
+        "财政部发布专项债通知",
+        "",
+        NOW - timedelta(hours=2),
+        "华尔街见闻",
+        url="https://wallstreetcn.com/live/2",
+    )
+    trading = TradingDayInfo(
+        day=date(2026, 11, 5),
+        is_trading=True,
+        previous=date(2026, 11, 4),
+        verified=True,
+    )
+    draft = build_morning_draft(
+        MarketSnapshot(facts=[], captured_at=NOW),
+        [first, second],
+        report_day=date(2026, 11, 5),
+        now=NOW,
+        trading=trading,
+    )
+    names = [source.name for source in draft.sources]
+    assert names.count("华尔街见闻") == 1
+
+
+def test_rank_news_scores_title_and_lead_only():
+    from src.daily.writer.rule_finance import rank_news
+
+    deep = _news(
+        "市场综述",
+        "无关内容" * 100 + " 央行降息 25 个基点",
+        NOW - timedelta(hours=1),
+    )
+    lead = _news("央行降息 25 个基点", "", NOW - timedelta(hours=1))
+    ranked = rank_news([deep, lead], now=NOW)
+    assert ranked[0].title == "央行降息 25 个基点"
+
+
+def test_morning_draft_uses_platform_display_names():
+    item = ContentItem(
+        id="wallstreetcn:live:9",
+        source_type=SourceType.WALLSTREETCN,
+        title="央行开展逆回购操作",
+        url="https://wallstreetcn.com/live/9",
+        content="央行开展逆回购操作。",
+        published_at=NOW,
+        metadata={},
+    )
+    trading = TradingDayInfo(
+        day=date(2026, 11, 5),
+        is_trading=True,
+        previous=date(2026, 11, 4),
+        verified=True,
+    )
+    draft = build_morning_draft(
+        MarketSnapshot(facts=[], captured_at=NOW),
+        [item],
+        report_day=date(2026, 11, 5),
+        now=NOW,
+        trading=trading,
+    )
+    names = [source.name for source in draft.sources]
+    assert "华尔街见闻" in names
+    assert "wallstreetcn" not in names
+
+
+def test_rank_news_handles_naive_timestamp():
+    from src.daily.writer.rule_finance import rank_news
+
+    naive = _news("央行开展逆回购", "", datetime(2026, 11, 5, 7, 0))
+    aware = _news("财政部发布通知", "", NOW)
+    ranked = rank_news([naive, aware], now=NOW)
+    assert len(ranked) == 2

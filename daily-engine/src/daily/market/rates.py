@@ -1,14 +1,26 @@
-"""US Treasury yields from FRED and China bond fallbacks."""
+"""US Treasury yields from FRED and China bond yields from ChinaBond."""
 
 from __future__ import annotations
 
+from datetime import date, timedelta
 from typing import Mapping
+from zoneinfo import ZoneInfo
 
 import httpx
+from bs4 import BeautifulSoup
 
 from .schema import Fact
 
 FRED_CSV_URL = "https://fred.stlouisfed.org/graph/fredgraph.csv"
+CHINABOND_URL = "https://yield.chinabond.com.cn/cbweb-pbc-web/pbc/historyQuery"
+CHINABOND_HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+        "(KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36"
+    ),
+    "Referer": "https://yield.chinabond.com.cn/cbweb-mn/yield_main?locale=zh_CN",
+}
+SHANGHAI = ZoneInfo("Asia/Shanghai")
 FRED_SERIES = {
     "DGS2": "美国 2 年期国债",
     "DGS10": "美国 10 年期国债",
@@ -87,29 +99,106 @@ async def fetch_fred_yields(
     return facts
 
 
+def _to_float(text: str) -> float | None:
+    try:
+        return float(text)
+    except (TypeError, ValueError):
+        return None
+
+
+def parse_china_bond_yields(html: str) -> list[Fact]:
+    """Read the latest 10Y/30Y China government bond yields from the curve table."""
+    soup = BeautifulSoup(html.replace("&nbsp", ""), "html.parser")
+    observations: dict[str, list[tuple[str, float]]] = {}
+    for table in soup.find_all("table"):
+        header: list[str] | None = None
+        for tr in table.find_all("tr"):
+            cells = [
+                "".join(cell.get_text(" ", strip=True).split())
+                for cell in tr.find_all(["th", "td"])
+            ]
+            if not cells:
+                continue
+            if header is None:
+                if "日期" in cells and "10年" in cells:
+                    header = cells
+                continue
+            try:
+                date_col = header.index("日期")
+            except ValueError:
+                continue
+            if "国债收益率曲线" not in cells[0]:
+                continue
+            if len(cells) <= date_col:
+                continue
+            for term in ("10年", "30年"):
+                try:
+                    column = header.index(term)
+                except ValueError:
+                    continue
+                if len(cells) <= column:
+                    continue
+                value = _to_float(cells[column])
+                if value is None:
+                    continue
+                observations.setdefault(term, []).append(
+                    (cells[date_col], value)
+                )
+
+    facts: list[Fact] = []
+    for term, label, fact_id in (
+        ("10年", "中国 10 年期国债", "rate:cn10y"),
+        ("30年", "中国 30 年期国债", "rate:cn30y"),
+    ):
+        rows = sorted(observations.get(term, []), key=lambda row: row[0])
+        if not rows:
+            continue
+        as_of, latest = rows[-1]
+        change_num: float | None = None
+        change: str | None = None
+        direction = "unknown"
+        if len(rows) >= 2:
+            change_num = round((latest - rows[-2][1]) * 100, 1)
+            change = f"{change_num:+.1f}BP"
+            direction = _direction(change_num)
+        facts.append(
+            Fact(
+                id=fact_id,
+                group="rate",
+                label=label,
+                value=f"{latest:.2f}%",
+                value_num=latest,
+                change=change,
+                change_num=change_num,
+                change_unit="bp" if change_num is not None else None,
+                direction=direction,
+                status="ok",
+                source_name="中国债券信息网",
+                source_url="https://yield.chinabond.com.cn/",
+                as_of=as_of,
+            )
+        )
+    return facts
+
+
 async def fetch_china_bond_yields(client: httpx.AsyncClient) -> list[Fact]:
-    """China bond yields have no stable public endpoint in v1; mark missing."""
-    return [
-        Fact(
-            id="rate:cn10y",
-            group="rate",
-            label="中国 10 年期国债",
-            value="暂缺",
-            status="missing",
-            note="v1 无稳定公开接口",
-            source_name="暂缺",
-            source_url="https://www.chinabond.com.cn/",
-            as_of="暂缺",
-        ),
-        Fact(
-            id="rate:cn30y",
-            group="rate",
-            label="中国 30 年期国债",
-            value="暂缺",
-            status="missing",
-            note="v1 无稳定公开接口",
-            source_name="暂缺",
-            source_url="https://www.chinabond.com.cn/",
-            as_of="暂缺",
-        ),
-    ]
+    """Fetch China government bond yields; return [] when unavailable."""
+    today = date.today()
+    params = {
+        "startDate": (today - timedelta(days=20)).isoformat(),
+        "endDate": today.isoformat(),
+        "gjqx": "0",
+        "qxId": "ycqx",
+        "locale": "cn_ZH",
+    }
+    try:
+        response = await client.get(
+            CHINABOND_URL,
+            params=params,
+            headers=CHINABOND_HEADERS,
+            timeout=15,
+        )
+        response.raise_for_status()
+    except Exception:  # noqa: BLE001 - optional data, hide on failure
+        return []
+    return parse_china_bond_yields(response.text)
