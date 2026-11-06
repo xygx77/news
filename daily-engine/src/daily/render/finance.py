@@ -193,17 +193,6 @@ def _calendar_sources(draft: MorningDraft) -> str:
     return "、".join(parts) if parts else "暂缺"
 
 
-def _source_items(draft: MorningDraft) -> str:
-    if not draft.sources:
-        return '<p class="small">暂缺</p>'
-    return "\n".join(
-        f'<p class="source-item"><a href="{html.escape(ref.url, quote=True)}">'
-        f"{html.escape(ref.name)}</a> "
-        f'<span class="small">{html.escape(ref.note)}</span></p>'
-        for ref in draft.sources
-    )
-
-
 def _values(draft: MorningDraft) -> Mapping[str, str]:
     ashare = _with_placeholders(
         [fact for fact in draft.facts if fact.group == "ashare"],
@@ -272,7 +261,6 @@ def _values(draft: MorningDraft) -> Mapping[str, str]:
         "RISK_ITEMS": "".join(
             f"<li>{html.escape(item)}</li>" for item in draft.risk_items
         ),
-        "SOURCE_ITEMS": _source_items(draft),
         "DISCLAIMER": _escape(
             "机构观点，不构成投资建议。"
             f"数据截至 {captured}（北京时间）。未获取项：{missing_text}。"

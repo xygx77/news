@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Sequence
 from urllib.parse import urlsplit
 
-from ..writer.draft import LaserDraft, SourceRef
+from ..writer.draft import LaserDraft
 from ..writer.rule_finance import WEEKDAYS_CN
 from ..writer.rule_laser import truncate_title
 from .template import fill_placeholders, render_conditional_blocks
@@ -59,17 +59,6 @@ def _laser_items(draft: LaserDraft) -> str:
     return "\n".join(articles)
 
 
-def _source_items(refs: Sequence[SourceRef]) -> str:
-    if not refs:
-        return '<p class="small">暂缺</p>'
-    return "\n".join(
-        f'<p class="source-item"><a href="{html.escape(ref.url, quote=True)}">'
-        f"{html.escape(ref.name)}</a> "
-        f'<span class="small">{html.escape(ref.note)}</span></p>'
-        for ref in refs
-    )
-
-
 def render_laser(
     draft: LaserDraft, *, template_path: Path, output_path: Path
 ) -> None:
@@ -94,7 +83,6 @@ def render_laser(
         ),
         "KEY_POINTS": _key_points(draft),
         "LASER_ITEMS": _laser_items(draft),
-        "SOURCE_ITEMS": _source_items(draft.sources),
         "DISCLAIMER": _escape(
             "本简报由规则自动生成，趋势点评待接入 AI。"
             f"数据窗口：近 {draft.window_hours} 小时。"

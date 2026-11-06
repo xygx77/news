@@ -291,3 +291,33 @@ def test_render_morning_shows_china_bond_when_available(tmp_path):
     )
     text = out.read_text(encoding="utf-8")
     assert "中国 10 年期国债" in text and "1.60%" in text
+
+
+def test_render_morning_omits_source_list_but_keeps_disclaimer(tmp_path):
+    from tests.daily.factories import fixed_morning_draft
+
+    draft = fixed_morning_draft()
+    out = tmp_path / "morning.html"
+    render_morning(
+        draft,
+        template_path=ROOT / "templates/daily/morning.html",
+        output_path=out,
+    )
+    text = out.read_text(encoding="utf-8")
+    assert "<h2>信息来源</h2>" not in text
+    assert "不构成投资建议" in text
+
+
+def test_render_laser_omits_source_list_but_keeps_disclaimer(tmp_path):
+    from tests.daily.factories import fixed_laser_draft
+
+    draft = fixed_laser_draft()
+    out = tmp_path / "laser.html"
+    render_laser(
+        draft,
+        template_path=ROOT / "templates/daily/laser.html",
+        output_path=out,
+    )
+    text = out.read_text(encoding="utf-8")
+    assert "信息来源</h2>" not in text
+    assert "数据截至" in text
