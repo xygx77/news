@@ -248,6 +248,33 @@ def test_render_laser_truncates_long_chinese_title(tmp_path):
     assert "激" * 30 + "…" in text
 
 
+def test_render_laser_headline_links_to_source(tmp_path):
+    from tests.daily.factories import fixed_laser_draft
+
+    draft = fixed_laser_draft()
+    draft.items[0].url = "https://example.com/laser/source?from=a&to=b"
+    out = tmp_path / "laser.html"
+    render_laser(
+        draft,
+        template_path=ROOT / "templates/daily/laser.html",
+        output_path=out,
+    )
+    text = out.read_text(encoding="utf-8")
+    assert (
+        '<a href="https://example.com/laser/source?from=a&amp;to=b">' in text
+    )
+
+    # A non-http target must degrade to plain text, not become a live link.
+    draft.items[0].url = "javascript:alert(1)"
+    render_laser(
+        draft,
+        template_path=ROOT / "templates/daily/laser.html",
+        output_path=out,
+    )
+    text = out.read_text(encoding="utf-8")
+    assert "javascript:" not in text
+
+
 def test_render_morning_shows_breadth_sentence(tmp_path):
     from tests.daily.factories import fixed_morning_draft
 

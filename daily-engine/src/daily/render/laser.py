@@ -21,6 +21,21 @@ def _date_cn(day) -> str:
     return f"{day.year}年{day.month}月{day.day}日"
 
 
+def _safe_href(url: object) -> str | None:
+    """Return an escaped href, but only for public http(s) targets."""
+    value = str(url or "").strip()
+    if not value.lower().startswith(("http://", "https://")):
+        return None
+    return html.escape(value, quote=True)
+
+
+def _link_or_text(url: object, label: str) -> str:
+    """Render an anchor for public http(s) targets, plain text otherwise."""
+    href = _safe_href(url)
+    text = html.escape(str(label or ""))
+    return f'<a href="{href}">{text}</a>' if href else text
+
+
 def _key_points(draft: LaserDraft) -> str:
     if not draft.key_points:
         return "<li>暂缺</li>"
@@ -40,19 +55,20 @@ def _laser_items(draft: LaserDraft) -> str:
         alternates = ""
         if item.alternates:
             links = "、".join(
-                f'<a href="{html.escape(alt, quote=True)}">'
-                f"{html.escape(urlsplit(alt).netloc or alt)}</a>"
+                _link_or_text(alt, urlsplit(alt).netloc or alt)
                 for alt in item.alternates
             )
             alternates = f'<p class="small">其他来源：{links}</p>'
+        # The headline is the entry point to the source page, like the finance
+        # brief's policy section; unsafe URLs fall back to plain text.
+        title_html = _link_or_text(item.url, truncate_title(item.title))
         articles.append(
             '<article class="laser-item">'
             f'<h3><span class="tag">{index}. {html.escape(item.category)}</span>'
-            f"{html.escape(truncate_title(item.title))}</h3>"
+            f"{title_html}</h3>"
             f"<p>{html.escape(item.summary or '暂缺')}</p>"
             '<p class="small">来源：'
-            f'<a href="{html.escape(item.url, quote=True)}">'
-            f"{html.escape(item.source_name)}</a>"
+            f"{_link_or_text(item.url, item.source_name)}"
             f" · {published}</p>"
             f"{alternates}</article>"
         )
