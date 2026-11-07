@@ -153,6 +153,7 @@ def parse_clist(payload: dict[str, Any], *, as_of: str) -> list[Fact]:
 async def _get_json(
     client: httpx.AsyncClient, url: str, *, params: Mapping[str, Any], attempts: int = 3
 ) -> dict[str, Any]:
+    """Fetch JSON, retrying transient failures and empty payloads with backoff."""
     last_error: Exception | None = None
     for attempt in range(attempts):
         try:
@@ -160,11 +161,14 @@ async def _get_json(
                 url, params=params, timeout=10, follow_redirects=True
             )
             response.raise_for_status()
-            return response.json()
+            payload = response.json()
+            if not isinstance(payload, dict) or not payload.get("data"):
+                raise ValueError("empty payload from eastmoney")
+            return payload
         except Exception as exc:  # noqa: BLE001 - retried, then raised
             last_error = exc
             if attempt < attempts - 1:
-                await asyncio.sleep(0.5)
+                await asyncio.sleep(1.0 * (2**attempt))
     assert last_error is not None
     raise last_error
 

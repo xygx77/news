@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from datetime import date, timedelta
-from typing import Mapping
+from datetime import date, datetime, timedelta
+from typing import Any, Mapping
 from zoneinfo import ZoneInfo
 
 import httpx
@@ -19,6 +19,14 @@ CHINABOND_HEADERS = {
         "(KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36"
     ),
     "Referer": "https://yield.chinabond.com.cn/cbweb-mn/yield_main?locale=zh_CN",
+}
+CHINAMONEY_URL = "https://www.chinamoney.com.cn/ags/ms/cm-u-bk-ccpr/CcprHisNew"
+CHINAMONEY_HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+        "(KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36"
+    ),
+    "Referer": "https://www.chinamoney.com.cn/chinese/bkccpr/",
 }
 SHANGHAI = ZoneInfo("Asia/Shanghai")
 FRED_SERIES = {
@@ -202,3 +210,77 @@ async def fetch_china_bond_yields(client: httpx.AsyncClient) -> list[Fact]:
     except Exception:  # noqa: BLE001 - optional data, hide on failure
         return []
     return parse_china_bond_yields(response.text)
+
+
+def parse_usdcny_fix(payload: Mapping[str, Any]) -> Fact | None:
+    """Parse the PBOC USD/CNY central parity fixing from ChinaMoney."""
+    records = payload.get("records") or []
+    if not records:
+        return None
+    latest = records[0]
+    values = latest.get("values") or []
+    try:
+        value = float(values[0])
+    except (TypeError, ValueError, IndexError):
+        return None
+
+    change: str | None = None
+    change_num: float | None = None
+    direction = "unknown"
+    if len(records) > 1:
+        previous_values = records[1].get("values") or []
+        try:
+            previous = float(previous_values[0])
+        except (TypeError, ValueError, IndexError):
+            previous = None
+        if previous:
+            change_num = (value - previous) / previous * 100
+            change = f"{change_num:+.2f}%"
+            if change_num > 0:
+                direction = "up"
+            elif change_num < 0:
+                direction = "down"
+            else:
+                direction = "flat"
+
+    return Fact(
+        id="rate:usdcny_fix",
+        group="rate",
+        label="美元兑人民币中间价",
+        value=f"{value:.4f}",
+        value_num=value,
+        change=change,
+        change_num=change_num,
+        change_unit="pct" if change else None,
+        direction=direction,
+        status="ok",
+        source_name="中国外汇交易中心",
+        source_url="https://www.chinamoney.com.cn/chinese/bkccpr/",
+        as_of=str(latest.get("date") or ""),
+    )
+
+
+async def fetch_usdcny_fix(client: httpx.AsyncClient) -> Fact | None:
+    """Fetch the latest USD/CNY central parity fixing."""
+    today = datetime.now(SHANGHAI).date()
+    params = {
+        "startDate": (today - timedelta(days=10)).isoformat(),
+        "endDate": today.isoformat(),
+        "currency": "USD/CNY",
+        "pageNum": 1,
+        "pageSize": 10,
+    }
+    try:
+        response = await client.get(
+            CHINAMONEY_URL,
+            params=params,
+            headers=CHINAMONEY_HEADERS,
+            timeout=15,
+        )
+        response.raise_for_status()
+    except Exception:  # noqa: BLE001 - optional data, hide on failure
+        return None
+    try:
+        return parse_usdcny_fix(response.json())
+    except ValueError:
+        return None

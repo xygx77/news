@@ -197,3 +197,70 @@ def test_fetch_china_bond_yields_returns_empty_on_error():
             return await fetch_china_bond_yields(client)
 
     assert asyncio.run(run()) == []
+
+
+def test_parse_usdcny_fix_reads_latest_and_previous():
+    from src.daily.market.rates import parse_usdcny_fix
+
+    payload = {
+        "records": [
+            {"date": "2026-11-06", "values": ["6.7168"]},
+            {"date": "2026-11-05", "values": ["6.7156"]},
+        ]
+    }
+    fact = parse_usdcny_fix(payload)
+    assert fact is not None
+    assert fact.label == "美元兑人民币中间价"
+    assert fact.group == "rate"
+    assert fact.value == "6.7168"
+    assert fact.change == "+0.02%"
+    assert fact.direction == "up"
+    assert fact.as_of == "2026-11-06"
+    assert fact.source_name == "中国外汇交易中心"
+
+
+def test_parse_usdcny_fix_returns_none_without_records():
+    from src.daily.market.rates import parse_usdcny_fix
+
+    assert parse_usdcny_fix({}) is None
+    assert parse_usdcny_fix({"records": []}) is None
+    assert parse_usdcny_fix({"records": [{"date": "2026-11-06"}]}) is None
+
+
+def test_needs_retry_flags_exceptions_and_empty_results():
+    from src.daily.market.snapshot import _needs_retry
+
+    assert _needs_retry(RuntimeError("boom"))
+    assert _needs_retry(None)
+    assert _needs_retry([])
+    assert _needs_retry(([], []))
+    assert not _needs_retry([object()])
+    assert not _needs_retry(([object()], []))
+
+
+def test_get_json_retries_empty_payload(monkeypatch):
+    import asyncio as asyncio_module
+
+    from src.daily.market.eastmoney import _get_json
+
+    calls = {"count": 0}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        calls["count"] += 1
+        if calls["count"] < 3:
+            return httpx.Response(200, json={"data": None})
+        return httpx.Response(200, json={"data": {"diff": []}})
+
+    async def no_sleep(_seconds: float) -> None:
+        return None
+
+    monkeypatch.setattr(asyncio_module, "sleep", no_sleep)
+
+    async def run():
+        transport = httpx.MockTransport(handler)
+        async with httpx.AsyncClient(transport=transport) as client:
+            return await _get_json(client, "https://example.test/quote", params={})
+
+    payload = asyncio.run(run())
+    assert calls["count"] == 3
+    assert payload["data"] == {"diff": []}

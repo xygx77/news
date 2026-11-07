@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+from collections.abc import Awaitable, Callable
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
@@ -23,10 +24,26 @@ from .eastmoney import (
     fetch_sectors,
     fetch_turnover,
 )
-from .rates import FRED_SERIES, fetch_china_bond_yields, fetch_fred_yields
+from .rates import (
+    FRED_SERIES,
+    fetch_china_bond_yields,
+    fetch_fred_yields,
+    fetch_usdcny_fix,
+)
 from .schema import Fact, MarketSnapshot
 
 SHANGHAI = ZoneInfo("Asia/Shanghai")
+
+
+def _needs_retry(result: object) -> bool:
+    """Treat exceptions, ``None``, and empty collections as fetch failures."""
+    if isinstance(result, Exception) or result is None:
+        return True
+    if isinstance(result, tuple):
+        return not any(result)
+    if isinstance(result, list):
+        return not result
+    return False
 
 
 def _a_share_secids(settings: MarketSettings) -> dict[str, str]:
@@ -47,19 +64,24 @@ async def fetch_market_snapshot(
     captured_at = datetime.now(SHANGHAI)
     a_share = _a_share_secids(settings)
 
-    tasks = {
-        "A 股": fetch_quotes(client, a_share, group="ashare", as_of=as_of),
-        "港股": fetch_quotes(client, HK, group="hk", as_of=as_of),
-        "美股": fetch_quotes(client, US, group="us", as_of="刚结束的美股交易日收盘"),
-        "欧股": fetch_quotes(client, EU, group="eu", as_of=as_of),
-        "日韩": fetch_quotes(client, APAC, group="apac", as_of=as_of),
-        "汇率": fetch_quotes(client, FX, group="fx", as_of="抓取时点"),
-        "商品": fetch_quotes(client, COMMODITY, group="commodity", as_of="抓取时点"),
-        "美债": fetch_fred_yields(client, FRED_SERIES),
-        "中国国债": fetch_china_bond_yields(client),
+    builders: dict[str, Callable[[], Awaitable[object]]] = {
+        "A 股": lambda: fetch_quotes(client, a_share, group="ashare", as_of=as_of),
+        "港股": lambda: fetch_quotes(client, HK, group="hk", as_of=as_of),
+        "美股": lambda: fetch_quotes(
+            client, US, group="us", as_of="刚结束的美股交易日收盘"
+        ),
+        "欧股": lambda: fetch_quotes(client, EU, group="eu", as_of=as_of),
+        "日韩": lambda: fetch_quotes(client, APAC, group="apac", as_of=as_of),
+        "汇率": lambda: fetch_quotes(client, FX, group="fx", as_of="抓取时点"),
+        "商品": lambda: fetch_quotes(
+            client, COMMODITY, group="commodity", as_of="抓取时点"
+        ),
+        "美债": lambda: fetch_fred_yields(client, FRED_SERIES),
+        "中国国债": lambda: fetch_china_bond_yields(client),
+        "人民币中间价": lambda: fetch_usdcny_fix(client),
     }
     if settings.sectors.enabled:
-        tasks["板块"] = fetch_sectors(
+        builders["板块"] = lambda: fetch_sectors(
             client, top_n=settings.sectors.top_n, as_of=as_of
         )
     turnover_secids = {
@@ -68,11 +90,23 @@ async def fetch_market_snapshot(
         if secid in {"1.000001", "0.399001"}
     }
     if turnover_secids:
-        tasks["成交额"] = fetch_turnover(client, turnover_secids)
-    tasks["涨跌家数"] = fetch_breadth(client)
+        builders["成交额"] = lambda: fetch_turnover(client, turnover_secids)
+    builders["涨跌家数"] = lambda: fetch_breadth(client)
 
-    names = list(tasks)
-    results = await asyncio.gather(*tasks.values(), return_exceptions=True)
+    names = list(builders)
+    results = await asyncio.gather(
+        *(build() for build in builders.values()), return_exceptions=True
+    )
+    # Remote endpoints fail intermittently; retry only the groups that came back empty.
+    failed = [name for name, result in zip(names, results) if _needs_retry(result)]
+    if failed:
+        await asyncio.sleep(2)
+        retried = await asyncio.gather(
+            *(builders[name]() for name in failed), return_exceptions=True
+        )
+        for name, result in zip(failed, retried):
+            results[names.index(name)] = result
+
     facts: list[Fact] = []
     missing: list[str] = []
     for name, result in zip(names, results):
