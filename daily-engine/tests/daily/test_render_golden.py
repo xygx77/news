@@ -172,10 +172,11 @@ def test_render_laser_and_index(tmp_path):
         template_path=ROOT / "templates/daily/index.html",
     )
     index = (output_dir / "index.html").read_text(encoding="utf-8")
-    assert "开盘前晨报" in index and "激光行业简报" in index
+    assert "金融市场晨报" in index and "激光产业简报" in index
+    assert index.count("今日导读") == 2
     assert "2026-11-05/morning.html" in index
     assert "2026-11-05/laser.html" in index
-    assert "2026-11-05：" in index
+    assert '<span class="day">2026-11-05</span>' in index
 
 
 def test_render_laser_renders_alternate_sources(tmp_path):

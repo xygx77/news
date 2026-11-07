@@ -12,10 +12,16 @@ from ..writer.rule_finance import WEEKDAYS_CN
 from .template import fill_placeholders, render_conditional_blocks
 
 _DATE_DIR = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+_TAG = re.compile(r"<[^>]+>")
 
 
 def _escape(value: object) -> str:
     return html.escape(str(value if value is not None else ""))
+
+
+def _plain(value: object) -> str:
+    """Strip inline markup from feed titles before escaping."""
+    return html.escape(_TAG.sub("", str(value if value is not None else "")))
 
 
 def list_archives(output_dir: Path) -> list[date]:
@@ -34,40 +40,44 @@ def list_archives(output_dir: Path) -> list[date]:
     return sorted(archives, reverse=True)
 
 
+_MORE_LINK = '<span class="more">查看全文 <span class="arrow">→</span></span>'
+
+
 def _morning_card(report_day: date, morning: MorningDraft | None) -> str:
+    head = f'<div class="card-head"><h2>金融市场晨报</h2>{_MORE_LINK}</div>'
     if morning is None:
         return (
             '<a class="card" href="latest/morning.html">'
-            "<h2>开盘前晨报</h2>"
-            "<p>本期未生成，见最近一期。</p></a>"
+            f"{head}"
+            '<p class="card-empty">本期未生成，见最近一期。</p></a>'
         )
     points = "".join(
-        f"<li>{html.escape(point)}</li>" for point in morning.key_points[:4]
+        f"<li>{_plain(point)}</li>" for point in morning.key_points[:4]
     )
     return (
         f'<a class="card" href="{report_day.isoformat()}/morning.html">'
-        "<h2>开盘前晨报</h2>"
-        f"<ul>{points}</ul>"
-        '<span class="more">查看全文 →</span></a>'
+        f"{head}"
+        '<p class="digest-label">今日导读</p>'
+        f'<ul class="digest">{points}</ul></a>'
     )
 
 
 def _laser_card(report_day: date, laser: LaserDraft | None) -> str:
+    head = f'<div class="card-head"><h2>激光产业简报</h2>{_MORE_LINK}</div>'
     if laser is None:
         return (
             '<a class="card" href="latest/laser.html">'
-            "<h2>激光行业简报</h2>"
-            "<p>本期未生成，见最近一期。</p></a>"
+            f"{head}"
+            '<p class="card-empty">本期未生成，见最近一期。</p></a>'
         )
-    items = "".join(
-        f"<li>{html.escape(item.title)}（{html.escape(item.source_name)}）</li>"
-        for item in laser.items[:3]
+    points = "".join(
+        f"<li>{_plain(point)}</li>" for point in laser.key_points
     )
     return (
         f'<a class="card" href="{report_day.isoformat()}/laser.html">'
-        "<h2>激光行业简报</h2>"
-        f"<ul>{items}</ul>"
-        '<span class="more">查看全文 →</span></a>'
+        f"{head}"
+        '<p class="digest-label">今日导读</p>'
+        f'<ul class="digest">{points}</ul></a>'
     )
 
 
@@ -82,9 +92,10 @@ def _archive(output_dir: Path) -> str:
     for month in sorted(groups, reverse=True):
         year, month_number = month.split("-")
         entries = "".join(
-            f'<li>{day.isoformat()}：'
-            f'<a href="{day.isoformat()}/morning.html">晨报</a> · '
-            f'<a href="{day.isoformat()}/laser.html">激光简报</a></li>'
+            f'<li><span class="day">{day.isoformat()}</span>'
+            f'<span class="links">'
+            f'<a href="{day.isoformat()}/morning.html">晨报</a>'
+            f'<a href="{day.isoformat()}/laser.html">激光简报</a></span></li>'
             for day in groups[month]
         )
         parts.append(f"<h3>{year}年{int(month_number)}月</h3><ul>{entries}</ul>")

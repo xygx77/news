@@ -6,52 +6,165 @@
   <title>每日简报 | {{DATE_CN}}</title>
   <style>
     :root {
-      --ink: #252525;
-      --muted: #666;
+      --ink: #26282b;
+      --muted: #5f6b76;
       --paper: #fff;
-      --bg: #f3f5f7;
+      --bg: #eef0f2;
       --accent: #1a3a5c;
       --accent-2: #2e5d8c;
-      --line: #dde3e8;
+      --accent-3: #8b5e34;
+      --line: #dfe3e8;
+      --radius: 10px;
+      --serif: "Noto Serif SC", "Source Han Serif SC", "Songti SC", "SimSun", Georgia, serif;
+      --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+      --ease: cubic-bezier(.22, 1, .36, 1);
     }
     * { box-sizing: border-box; }
     body {
       margin: 0;
       background: var(--bg);
       color: var(--ink);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+      font-family: var(--sans);
       line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
     }
-    .wrap { max-width: 920px; margin: 0 auto; padding: 28px 18px 48px; }
-    header { margin: 0 0 22px; }
-    h1 { margin: 0; color: var(--accent); font-size: 26px; letter-spacing: 1px; }
-    .date { margin: 6px 0 0; color: var(--muted); font-size: 14px; }
-    .cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+    .wrap { max-width: 960px; margin: 0 auto; padding: 36px 20px 56px; }
+
+    header { margin: 0 0 28px; padding-bottom: 18px; border-bottom: 1px solid var(--line); }
+    h1 {
+      margin: 0;
+      font-family: var(--serif);
+      font-size: clamp(24px, 3.4vw, 30px);
+      font-weight: 700;
+      letter-spacing: .04em;
+      color: var(--accent);
+      text-wrap: balance;
+    }
+    .date {
+      margin: 8px 0 0;
+      font-size: 13px;
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+    }
+    .lede { margin: 6px 0 0; font-size: 14px; color: var(--muted); max-width: 60ch; text-wrap: pretty; }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 20px;
+    }
     .card {
-      display: block;
+      display: flex;
+      flex-direction: column;
       background: var(--paper);
       border: 1px solid var(--line);
-      border-radius: 8px;
-      padding: 20px;
+      border-radius: var(--radius);
+      padding: 22px 22px 20px;
       color: inherit;
       text-decoration: none;
-      transition: border-color .15s ease;
+      transition: border-color .18s ease, transform .18s var(--ease);
     }
-    .card:hover { border-color: var(--accent-2); }
-    .card h2 { margin: 0 0 10px; color: var(--accent); font-size: 18px; }
-    .card ul { margin: 0; padding-left: 1.2em; }
-    .card li { margin: 0 0 6px; font-size: 14px; }
-    .card .more { display: inline-block; margin-top: 10px; color: var(--accent-2); font-size: 13px; }
-    .archive { margin-top: 30px; background: var(--paper); border: 1px solid var(--line); border-radius: 8px; padding: 20px; }
-    .archive h2 { margin: 0 0 12px; color: var(--accent); font-size: 18px; }
-    .archive h3 { margin: 16px 0 6px; color: var(--accent-2); font-size: 14px; }
-    .archive ul { margin: 0; padding-left: 1.2em; }
-    .archive li { margin: 0 0 5px; font-size: 14px; }
-    .archive a { color: var(--accent-2); }
-    footer { margin-top: 26px; color: var(--muted); font-size: 12px; }
+    .card:hover { border-color: var(--accent-2); transform: translateY(-2px); }
+    .card:focus-visible { outline: 2px solid var(--accent-2); outline-offset: 2px; }
+    .card-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+    .card h2 {
+      margin: 0;
+      font-family: var(--serif);
+      font-size: 19px;
+      font-weight: 700;
+      letter-spacing: .02em;
+      color: var(--accent);
+    }
+    .card .more { flex: none; font-size: 12px; color: var(--accent-2); white-space: nowrap; }
+    .card .arrow { display: inline-block; transition: transform .18s var(--ease); }
+    .card:hover .arrow { transform: translateX(3px); }
+
+    .digest-label {
+      margin: 16px 0 0;
+      padding-bottom: 4px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: .06em;
+      color: var(--accent-3);
+      border-bottom: 1px solid var(--line);
+    }
+    .digest { list-style: none; margin: 0; padding: 0; }
+    .digest li {
+      position: relative;
+      padding: 9px 0 9px 16px;
+      font-size: 14px;
+      line-height: 1.65;
+      border-top: 1px solid var(--line);
+      text-wrap: pretty;
+    }
+    .digest li:first-child { border-top: 0; }
+    .digest li::before {
+      content: "";
+      position: absolute;
+      left: 2px;
+      top: 1.05em;
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: var(--accent-3);
+    }
+    .card-empty { margin: 14px 0 0; font-size: 14px; color: var(--muted); }
+
+    .archive {
+      margin-top: 32px;
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 22px;
+    }
+    .archive h2 {
+      margin: 0;
+      font-family: var(--serif);
+      font-size: 18px;
+      letter-spacing: .02em;
+      color: var(--accent);
+    }
+    .archive h3 {
+      margin: 20px 0 6px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--accent-2);
+    }
+    .archive ul { list-style: none; margin: 0; padding: 0; }
+    .archive li {
+      display: flex;
+      align-items: baseline;
+      gap: 14px;
+      padding: 7px 0;
+      border-top: 1px solid var(--line);
+      font-size: 14px;
+    }
+    .archive li:first-of-type { border-top: 0; }
+    .archive .day { flex: none; color: var(--ink); font-variant-numeric: tabular-nums; }
+    .archive .links { display: flex; gap: 18px; }
+    .archive a { color: var(--accent-2); text-decoration: none; }
+    .archive a:hover { text-decoration: underline; text-underline-offset: 3px; }
+    .archive a:focus-visible { outline: 2px solid var(--accent-2); outline-offset: 2px; }
+    .archive .small { margin: 10px 0 0; font-size: 13px; color: var(--muted); }
+
+    footer {
+      margin-top: 28px;
+      padding-top: 14px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 12px;
+    }
+
     @media (max-width: 680px) {
-      .cards { grid-template-columns: 1fr; }
-      h1 { font-size: 22px; }
+      .wrap { padding: 24px 16px 40px; }
+      .cards { gap: 16px; }
+      .card { padding: 18px 18px 16px; }
+      .archive { padding: 18px; }
+      .archive li { flex-wrap: wrap; gap: 2px 12px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .card, .card .arrow { transition: none; }
+      .card:hover { transform: none; }
     }
   </style>
 </head>
@@ -60,6 +173,7 @@
     <header>
       <h1>每日简报</h1>
       <p class="date">{{DATE_CN}} · {{WEEKDAY_CN}}</p>
+      <p class="lede">金融市场与激光产业的双线晨间观察，数据与来源随文标注。</p>
     </header>
     <main>
       <div class="cards">
