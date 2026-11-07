@@ -10,6 +10,7 @@ from zoneinfo import ZoneInfo
 import httpx
 
 from ..config import MarketSettings
+from . import sina, tencent
 from .eastmoney import (
     A_SHARE,
     A_SHARE_CODES,
@@ -33,6 +34,8 @@ from .rates import (
 from .schema import Fact, MarketSnapshot
 
 SHANGHAI = ZoneInfo("Asia/Shanghai")
+# Order matters: the first feed that returns rows for a group wins.
+SECONDARY_QUOTE_FEEDS = (tencent, sina)
 
 
 def _needs_retry(result: object) -> bool:
@@ -106,6 +109,30 @@ async def fetch_market_snapshot(
         )
         for name, result in zip(failed, retried):
             results[names.index(name)] = result
+
+    # Each group comes from a single upstream. If it is still empty after the
+    # retry, try the secondary feeds instead of dropping those rows: Tencent for
+    # the equity indices, Sina for FX and commodities.
+    for name, result in zip(names, results):
+        if not _needs_retry(result):
+            continue
+        for provider in SECONDARY_QUOTE_FEEDS:
+            codes = provider.codes_for_group(name, a_share)
+            group = provider.group_id(name)
+            if not codes or group is None:
+                continue
+            try:
+                fallback = await provider.fetch_quotes(
+                    client,
+                    codes,
+                    group=group,
+                    as_of=provider.as_of_for(name, as_of),
+                )
+            except Exception:  # noqa: BLE001 - the group stays missing instead
+                continue
+            if fallback:
+                results[names.index(name)] = fallback
+                break
 
     facts: list[Fact] = []
     missing: list[str] = []

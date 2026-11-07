@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from datetime import date, datetime, timedelta
 from typing import Any, Mapping
 from zoneinfo import ZoneInfo
@@ -9,6 +10,7 @@ from zoneinfo import ZoneInfo
 import httpx
 from bs4 import BeautifulSoup
 
+from . import ftshare
 from .schema import Fact
 
 FRED_CSV_URL = "https://fred.stlouisfed.org/graph/fredgraph.csv"
@@ -189,8 +191,8 @@ def parse_china_bond_yields(html: str) -> list[Fact]:
     return facts
 
 
-async def fetch_china_bond_yields(client: httpx.AsyncClient) -> list[Fact]:
-    """Fetch China government bond yields; return [] when unavailable."""
+async def _fetch_chinabond_yields(client: httpx.AsyncClient) -> list[Fact]:
+    """Scrape the official ChinaBond curve table; ``[]`` when unavailable."""
     today = date.today()
     params = {
         "startDate": (today - timedelta(days=20)).isoformat(),
@@ -210,6 +212,25 @@ async def fetch_china_bond_yields(client: httpx.AsyncClient) -> list[Fact]:
     except Exception:  # noqa: BLE001 - optional data, hide on failure
         return []
     return parse_china_bond_yields(response.text)
+
+
+async def fetch_china_bond_yields(client: httpx.AsyncClient) -> list[Fact]:
+    """China government bond yields: official curve first, FTShare as fallback.
+
+    The scrape fails often enough that the rate table would silently lose its
+    China rows; when it does, the FTShare gateway answers with the same curve and
+    carries its own trade date, so freshness is visible instead of assumed.
+    """
+    facts = await _fetch_chinabond_yields(client)
+    if facts:
+        return facts
+    api_key = os.environ.get("FTSHARE_API_KEY", "").strip()
+    if not api_key:
+        return []
+    try:
+        return await ftshare.fetch_china_bond_yields(client, api_key)
+    except Exception:  # noqa: BLE001 - optional data, hide on failure
+        return []
 
 
 def parse_usdcny_fix(payload: Mapping[str, Any]) -> Fact | None:

@@ -481,8 +481,11 @@ def _ashare_summary(facts: Sequence[Fact], trading: TradingDayInfo) -> str:
 
 def _notes(facts: Sequence[Fact]) -> dict[str, str]:
     ashare = [fact for fact in facts if fact.group == "ashare" and fact.status == "ok"]
+    # Read the source off the facts: the quote feed may have fallen back to the
+    # secondary provider, and the note must not claim the primary one.
+    ashare_sources = "、".join(sorted({fact.source_name for fact in ashare}))
     ashare_note = (
-        f"A 股主要指数来自东方财富，数据截至{ashare[0].as_of}。"
+        f"A 股主要指数来自{ashare_sources}，数据截至{ashare[0].as_of}。"
         if ashare
         else "A 股数据暂缺。"
     )
