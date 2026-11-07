@@ -54,6 +54,20 @@ foreach ($file in @("pyproject.toml", "uv.lock")) {
     Copy-Item (Join-Path $SourceRoot $file) (Join-Path $Engine $file) -Force
 }
 
+# This machine pins the Tsinghua mirror (UV_INDEX_URL / PIP_INDEX_URL), so a local
+# `uv sync` rewrites the lock with mirror URLs. GitHub runners cannot use those
+# URLs and `uv sync --locked` then fails before any page is generated, so rewrite
+# them back to public PyPI before the lock is committed.
+$lockPath = Join-Path $Engine "uv.lock"
+$lockText = Get-Content $lockPath -Raw
+if ($lockText -match 'pypi\.tuna\.tsinghua\.edu\.cn') {
+    $portable = $lockText `
+        -replace 'https://pypi\.tuna\.tsinghua\.edu\.cn/simple', 'https://pypi.org/simple' `
+        -replace 'https://pypi\.tuna\.tsinghua\.edu\.cn/packages/', 'https://files.pythonhosted.org/packages/'
+    [System.IO.File]::WriteAllText($lockPath, $portable, (New-Object System.Text.UTF8Encoding($false)))
+    Write-Host "Rewrote uv.lock mirror URLs to public PyPI."
+}
+
 $dataDest = Join-Path $Engine "data"
 New-Item -ItemType Directory -Force -Path $dataDest | Out-Null
 foreach ($file in @("config.daily.json", "laser_keywords.json", "cn_market_holidays.json")) {

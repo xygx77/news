@@ -43,6 +43,7 @@ from .writer.scoring import (
     SelectionResult,
     filter_by_window,
     load_keywords,
+    pick_enrichment_shortlist,
     select_items,
 )
 
@@ -52,6 +53,8 @@ SHANGHAI = ZoneInfo("Asia/Shanghai")
 DAILY_HEADERS = {
     "User-Agent": "Horizon/0.1.0 (+https://github.com/Thysrael/Horizon)",
 }
+# Article pages fetched per run to resolve publication times before ranking.
+ENRICH_LIMIT = 30
 
 
 @dataclass
@@ -195,6 +198,24 @@ async def _collect_laser(
 
     candidates = dedup_candidates(collection.candidates)
     rules = load_keywords(data_dir() / "laser_keywords.json")
+    # Resolve publication times before ranking: a site whose list page carries no
+    # date, or only a year-month, would otherwise never reach the ranking at all.
+    shortlist = pick_enrichment_shortlist(
+        candidates,
+        now=now,
+        rules=rules,
+        window_hours=config.daily.laser.fallback_window_hours,
+        limit=ENRICH_LIMIT,
+    )
+    resolved = {
+        candidate.url: candidate
+        for candidate in await enrich_items(
+            shortlist, client, top_n=ENRICH_LIMIT
+        )
+    }
+    candidates = [
+        resolved.get(candidate.url, candidate) for candidate in candidates
+    ]
     selection = select_items(
         candidates,
         now=now,
@@ -204,9 +225,8 @@ async def _collect_laser(
         min_items=config.daily.laser.min_items,
         max_items=config.daily.laser.max_items,
     )
-    enriched = await enrich_items(selection.items, client, top_n=15)
     enriched = filter_by_window(
-        enriched, now=now, window_hours=selection.window_hours
+        selection.items, now=now, window_hours=selection.window_hours
     )
     result = SelectionResult(items=enriched, window_hours=selection.window_hours)
     counts = {

@@ -74,24 +74,30 @@ def _make_date(year: str, month: str, day: str) -> datetime | None:
 
 
 def parse_date_from_url(url: str, date_regex: str | None = None) -> datetime | None:
-    """Extract a publication date from an article URL."""
+    """Extract a publication date from an article URL.
+
+    A URL that only carries year and month (``/202611/`` or ``/2026-11/``)
+    yields ``None`` on purpose: filling in day 1 silently pushed every article
+    of such a site outside the 48h window, so those sites never appeared in
+    the briefing. Callers fall back to the list-page text and, later, to the
+    article page metadata.
+    """
     if date_regex:
         match = re.search(date_regex, url)
         if match:
             groups = match.groupdict()
-            if groups.get("y") and groups.get("m"):
-                return _make_date(
-                    groups["y"], groups["m"], groups.get("d") or "1"
-                )
+            if groups.get("y") and groups.get("m") and groups.get("d"):
+                return _make_date(groups["y"], groups["m"], groups["d"])
     for pattern in _DATE_IN_URL:
         match = pattern.search(url)
-        if match:
-            groups = match.groups()
-            year, month = groups[0], groups[1]
-            day = groups[2] if len(groups) > 2 else "1"
-            parsed = _make_date(year, month, day)
-            if parsed is not None:
-                return parsed
+        if match is None:
+            continue
+        groups = match.groups()
+        if len(groups) < 3:
+            continue
+        parsed = _make_date(groups[0], groups[1], groups[2])
+        if parsed is not None:
+            return parsed
     return None
 
 

@@ -96,18 +96,29 @@ def test_parse_date_from_url_rejects_unparseable():
     assert parse_date_from_url("https://example.com/about/") is None
 
 
-def test_parse_date_from_url_handles_two_group_patterns():
+def test_parse_date_from_url_does_not_guess_the_day():
+    # Year-month URLs used to be read as day 1, which pushed every article of
+    # such a site outside the 48h window. They are now reported as unknown so
+    # the list-page text or the article page can supply the real date.
+    assert parse_date_from_url("https://example.com/2026-11/news") is None
+    assert parse_date_from_url("https://example.com/202611/news") is None
+
+
+def test_parse_date_from_url_keeps_full_dates():
     assert (
-        parse_date_from_url("https://example.com/2026-11/news")
+        parse_date_from_url("https://example.com/202611/05/news")
         .date()
         .isoformat()
-        == "2026-11-01"
+        == "2026-11-05"
     )
     assert (
-        parse_date_from_url("https://example.com/202611/news")
+        parse_date_from_url(
+            "https://example.com/2026-11-05/news",
+            r"/(?P<y>\d{4})-(?P<m>\d{2})-(?P<d>\d{2})/",
+        )
         .date()
         .isoformat()
-        == "2026-11-01"
+        == "2026-11-05"
     )
 
 

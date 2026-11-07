@@ -1,4 +1,5 @@
 import asyncio
+from collections import Counter
 from datetime import date, datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -22,6 +23,7 @@ from src.daily.writer.scoring import (
     categorize,
     filter_by_window,
     load_keywords,
+    pick_enrichment_shortlist,
     score_candidate,
     select_items,
 )
@@ -236,7 +238,7 @@ def test_headline_company_boost_is_not_a_category():
     assert categorize(candidate, rules) == "其他"
 
 
-def test_undated_candidates_rank_after_dated():
+def test_undated_candidate_needs_a_clear_score_lead():
     rules = load_keywords(ROOT / "data/laser_keywords.json")
     dated = LaserCandidate(
         "激光新品发布",
@@ -247,17 +249,113 @@ def test_undated_candidates_rank_after_dated():
         1.0,
         "zh",
     )
-    undated = LaserCandidate(
-        "并购融资 激光新品发布",
-        "https://x/undated",
+    tied = LaserCandidate(
+        "并购融资 激光",
+        "https://x/tied",
         None,
         "",
         "OFweek激光",
         1.0,
         "zh",
     )
-    result = select_items([undated, dated], now=NOW, rules=rules)
+    ahead = LaserCandidate(
+        "并购融资 激光新品发布",
+        "https://x/ahead",
+        None,
+        "",
+        "OFweek激光",
+        1.0,
+        "zh",
+    )
+
+    # Same effective score: the dated item wins.
+    result = select_items([tied, dated], now=NOW, rules=rules)
     assert result.items[0].url == "https://x/dated"
+
+    # Clearly stronger story without a date still outranks the weak dated one.
+    result = select_items([ahead, dated], now=NOW, rules=rules)
+    assert result.items[0].url == "https://x/ahead"
+
+
+def test_select_caps_items_per_source():
+    rules = load_keywords(ROOT / "data/laser_keywords.json")
+    candidates = []
+    for index in range(6):
+        candidates.append(
+            LaserCandidate(
+                f"激光新品发布 第{index}批",
+                f"https://a/{index}",
+                NOW - timedelta(hours=2),
+                "",
+                "激光制造网",
+                1.0,
+                "zh",
+            )
+        )
+    for source, category in (
+        ("OFweek激光", "并购融资"),
+        ("Coherent", "营收同比"),
+        ("Lumentum", "技术突破"),
+    ):
+        for index in range(2):
+            candidates.append(
+                LaserCandidate(
+                    f"{category} 激光动态 {index}",
+                    f"https://b/{source}/{index}",
+                    NOW - timedelta(hours=3),
+                    "",
+                    source,
+                    1.0,
+                    "zh",
+                )
+            )
+
+    result = select_items(candidates, now=NOW, rules=rules)
+    per_source = Counter(item.source_name for item in result.items)
+    assert len(result.items) >= 5
+    assert max(per_source.values()) <= 2
+    assert len(per_source) >= 3
+
+
+def test_shortlist_for_enrichment_keeps_undated_candidates():
+    rules = load_keywords(ROOT / "data/laser_keywords.json")
+    dated = LaserCandidate(
+        "激光新品发布",
+        "https://x/dated",
+        NOW - timedelta(hours=2),
+        "",
+        "激光制造网",
+        1.0,
+        "zh",
+    )
+    undated = LaserCandidate(
+        "射频激光新品",
+        "https://x/undated",
+        None,
+        "",
+        "European Optical Society",
+        1.0,
+        "en",
+    )
+    stale = LaserCandidate(
+        "激光新品发布 旧闻",
+        "https://x/stale",
+        NOW - timedelta(hours=200),
+        "",
+        "激光制造网",
+        1.0,
+        "zh",
+    )
+
+    picked = pick_enrichment_shortlist(
+        [dated, undated, stale], now=NOW, rules=rules, window_hours=72, limit=10
+    )
+    urls = [candidate.url for candidate in picked]
+    assert "https://x/dated" in urls
+    # An undated candidate must get its article page fetched to learn its date.
+    assert "https://x/undated" in urls
+    # A candidate already known to be stale must not cost a request.
+    assert "https://x/stale" not in urls
 
 
 def test_extract_title_prefers_og_title():

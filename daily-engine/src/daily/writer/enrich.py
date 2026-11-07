@@ -8,14 +8,19 @@ import logging
 import re
 from dataclasses import replace
 from datetime import datetime, timezone
-from typing import Any, Sequence
+from typing import Any, Sequence, TypeVar
 
 import httpx
 import trafilatura
 from bs4 import BeautifulSoup
 from dateutil.parser import isoparse
 
+from ..sources.laser import LaserCandidate
 from .scoring import LaserItem
+
+# Both laser candidates (before ranking) and selected items carry the fields
+# updated here, so the same fetcher serves both call sites.
+Enrichable = TypeVar("Enrichable", LaserCandidate, LaserItem)
 
 logger = logging.getLogger(__name__)
 
@@ -102,12 +107,17 @@ def extract_published_time(html: str) -> datetime | None:
 
 
 async def enrich_items(
-    items: Sequence[LaserItem], client: httpx.AsyncClient, *, top_n: int = 15
-) -> list[LaserItem]:
-    """Fetch article bodies for the top items and replace summaries."""
+    items: Sequence[Enrichable], client: httpx.AsyncClient, *, top_n: int = 15
+) -> list[Enrichable]:
+    """Fetch article bodies for the head of ``items`` and replace summaries.
+
+    Runs before ranking when given laser candidates, so that a site whose list
+    page carries no usable date can still get its publication time from the
+    article page instead of being dropped from the briefing.
+    """
     semaphore = asyncio.Semaphore(8)
 
-    async def enrich(item: LaserItem) -> LaserItem:
+    async def enrich(item: Enrichable) -> Enrichable:
         async with semaphore:
             try:
                 response = await client.get(

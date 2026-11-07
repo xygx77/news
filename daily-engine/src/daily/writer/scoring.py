@@ -14,6 +14,14 @@ from ..sources.laser import LaserCandidate
 MAIN_CATEGORIES = ("并购融资", "业绩", "技术突破", "产品发布", "标准规范")
 MAX_PER_CATEGORY = 3
 
+# An item whose publication time could not be resolved is kept, but ranks as if
+# it scored this much less, so undated sources can surface without displacing
+# fresher items of the same strength.
+UNDATED_PENALTY = 1.0
+# One source may not fill the brief on its own; 8 slots / 2 per source needs at
+# least 4 sources to be well represented.
+DEFAULT_MAX_PER_SOURCE = 2
+
 
 @dataclass(slots=True)
 class KeywordRule:
@@ -150,6 +158,8 @@ def _diversify(
     scored: list[tuple[float, LaserCandidate]],
     rules: KeywordRules,
     max_items: int,
+    per_source: Counter[str],
+    max_per_source: int,
 ) -> list[LaserItem]:
     counts = Counter(item.category for item in selected)
     selected_urls = {item.url for item in selected}
@@ -161,6 +171,7 @@ def _diversify(
                 (score, item)
                 for score, item in scored
                 if item.url not in selected_urls
+                and per_source[item.source_name] < max_per_source
                 and categorize(item, rules) == category
             ),
             None,
@@ -171,6 +182,7 @@ def _diversify(
         if len(selected) < max_items:
             selected.append(_to_item(raw, score, rules))
             counts[category] += 1
+            per_source[raw.source_name] += 1
             selected_urls.add(raw.url)
             continue
         replace_index = next(
@@ -178,6 +190,10 @@ def _diversify(
                 index
                 for index, item in enumerate(selected)
                 if counts[item.category] > 1
+                and (
+                    item.source_name == raw.source_name
+                    or per_source[raw.source_name] < max_per_source
+                )
             ),
             None,
         )
@@ -185,11 +201,40 @@ def _diversify(
             continue
         old = selected[replace_index]
         counts[old.category] -= 1
+        per_source[old.source_name] -= 1
         selected[replace_index] = _to_item(raw, score, rules)
         counts[category] += 1
+        per_source[raw.source_name] += 1
         selected_urls.discard(old.url)
         selected_urls.add(raw.url)
     return selected
+
+
+def _pick(
+    scored: Sequence[tuple[float, LaserCandidate]],
+    selected: list[LaserItem],
+    counts: Counter[str],
+    per_source: Counter[str],
+    rules: KeywordRules,
+    *,
+    max_items: int,
+    max_per_source: int,
+) -> None:
+    taken = {item.url for item in selected}
+    for score, candidate in scored:
+        if len(selected) >= max_items:
+            return
+        if candidate.url in taken:
+            continue
+        if per_source[candidate.source_name] >= max_per_source:
+            continue
+        category = categorize(candidate, rules)
+        if counts[category] >= MAX_PER_CATEGORY:
+            continue
+        selected.append(_to_item(candidate, score, rules))
+        taken.add(candidate.url)
+        counts[category] += 1
+        per_source[candidate.source_name] += 1
 
 
 def select_items(
@@ -201,6 +246,7 @@ def select_items(
     fallback_window_hours: int = 72,
     min_items: int = 5,
     max_items: int = 8,
+    max_per_source: int = DEFAULT_MAX_PER_SOURCE,
 ) -> SelectionResult:
     """Filter by time window, rank, and keep 5-8 diverse items."""
     effective_window = window_hours
@@ -211,7 +257,8 @@ def select_items(
     if len(windowed) < min_items and fallback_window_hours > effective_window:
         effective_window = fallback_window_hours
         windowed = [
-            candidate for candidate in candidates
+            candidate
+            for candidate in candidates
             if _in_window(candidate, now, effective_window)
         ]
 
@@ -220,6 +267,7 @@ def select_items(
         for candidate in windowed
         if (score := score_candidate(candidate, now=now, rules=rules)) > 0
     ]
+
     def sort_key(pair: tuple[float, LaserCandidate]):
         score, candidate = pair
         published = (
@@ -228,20 +276,69 @@ def select_items(
             else float("-inf")
         )
         inferred = candidate.time_inferred or candidate.published_at is None
-        return (inferred, -score, -published)
+        effective = score - UNDATED_PENALTY if inferred else score
+        return (-effective, inferred, -published)
 
     scored.sort(key=sort_key)
 
     selected: list[LaserItem] = []
     counts: Counter[str] = Counter()
-    for score, candidate in scored:
-        if len(selected) >= max_items:
-            break
-        category = categorize(candidate, rules)
-        if counts[category] >= MAX_PER_CATEGORY:
-            continue
-        selected.append(_to_item(candidate, score, rules))
-        counts[category] += 1
+    per_source: Counter[str] = Counter()
+    _pick(
+        scored,
+        selected,
+        counts,
+        per_source,
+        rules,
+        max_items=max_items,
+        max_per_source=max_per_source,
+    )
+    selected = _diversify(
+        selected, scored, rules, max_items, per_source, max_per_source
+    )
 
-    selected = _diversify(selected, scored, rules, max_items)
+    if len(selected) < min_items:
+        # Too few sources carried in-window news this run: fill the brief rather
+        # than ship a short one, relaxing the per-source quota.
+        counts = Counter(item.category for item in selected)
+        per_source = Counter(item.source_name for item in selected)
+        _pick(
+            scored,
+            selected,
+            counts,
+            per_source,
+            rules,
+            max_items=max_items,
+            max_per_source=max_items,
+        )
+
     return SelectionResult(items=selected, window_hours=effective_window)
+
+
+def pick_enrichment_shortlist(
+    candidates: Sequence[LaserCandidate],
+    *,
+    now: datetime,
+    rules: KeywordRules,
+    window_hours: int,
+    limit: int,
+) -> list[LaserCandidate]:
+    """Choose candidates whose article pages are worth fetching before ranking.
+
+    Undated candidates are included on purpose: their list page did not expose a
+    usable time, and the article page usually carries one. Dated candidates are
+    limited to the window so requests are not spent on stale pages.
+    """
+    ranked = sorted(
+        (
+            (score, candidate)
+            for candidate in candidates
+            if _in_window(candidate, now, window_hours)
+            and (score := score_candidate(candidate, now=now, rules=rules)) > 0
+        ),
+        key=lambda pair: (
+            pair[1].time_inferred or pair[1].published_at is None,
+            -pair[0],
+        ),
+    )
+    return [candidate for _, candidate in ranked[:limit]]
