@@ -1,73 +1,73 @@
 {
   "jin10": {
-    "last_ok": "2026-11-06",
+    "last_ok": "2026-11-07",
     "consecutive_failures": 0
   },
   "wallstreetcn": {
-    "last_ok": "2026-11-06",
+    "last_ok": "2026-11-07",
     "consecutive_failures": 0
   },
   "rss": {
-    "last_ok": "2026-11-06",
+    "last_ok": "2026-11-07",
     "consecutive_failures": 0
   },
   "激光制造网": {
-    "last_ok": "2026-11-06",
+    "last_ok": "2026-11-07",
     "consecutive_failures": 0,
     "last_failure": "2026-11-06"
   },
   "OFweek激光": {
-    "last_ok": "2026-11-06",
+    "last_ok": "2026-11-07",
     "consecutive_failures": 0
   },
   "Industrysourcing激光频道": {
     "last_ok": "2026-11-05",
-    "consecutive_failures": 1,
-    "last_failure": "2026-11-06"
+    "consecutive_failures": 2,
+    "last_failure": "2026-11-07"
   },
   "European Optical Society": {
-    "last_ok": "2026-11-06",
+    "last_ok": "2026-11-07",
     "consecutive_failures": 0
   },
   "激光世界中文版": {
     "last_failure": "2026-11-05",
     "consecutive_failures": 0,
-    "last_ok": "2026-11-06"
+    "last_ok": "2026-11-07"
   },
   "中国光学光电子行业协会": {
-    "last_ok": "2026-11-06",
+    "last_ok": "2026-11-07",
     "consecutive_failures": 0
   },
   "Optics.org": {
-    "last_ok": "2026-11-06",
+    "last_ok": "2026-11-07",
     "consecutive_failures": 0
   },
   "Coherent": {
-    "last_ok": "2026-11-06",
+    "last_ok": "2026-11-07",
     "consecutive_failures": 0
   },
   "IPG Photonics": {
-    "last_ok": "2026-11-06",
+    "last_ok": "2026-11-07",
     "consecutive_failures": 0
   },
   "Jenoptik": {
-    "last_ok": "2026-11-06",
+    "last_ok": "2026-11-07",
     "consecutive_failures": 0
   },
   "nLIGHT": {
-    "last_ok": "2026-11-06",
+    "last_ok": "2026-11-07",
     "consecutive_failures": 0
   },
   "大族激光": {
-    "last_ok": "2026-11-06",
+    "last_ok": "2026-11-07",
     "consecutive_failures": 0
   },
   "Lumentum": {
-    "last_ok": "2026-11-06",
+    "last_ok": "2026-11-07",
     "consecutive_failures": 0
   },
   "华工科技": {
-    "last_ok": "2026-11-06",
+    "last_ok": "2026-11-07",
     "consecutive_failures": 0
   }
 }
