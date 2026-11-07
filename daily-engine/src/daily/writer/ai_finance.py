@@ -494,7 +494,7 @@ async def build_ai_morning_draft(
                 temperature=0.2,
                 max_tokens=3000,
             ),
-            timeout=300,
+            timeout=600,
         )
         logger.debug("AI morning raw response: %s", text)
         payload = _parse_payload(text)
