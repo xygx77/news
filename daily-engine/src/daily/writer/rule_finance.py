@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+from collections import Counter
 from datetime import date, datetime, timezone
 from typing import Sequence
 
@@ -32,6 +33,8 @@ POLICY_KEYWORDS = (
     "非农",
 )
 RISK_KEYWORDS = ("暴跌", "违约", "制裁", "冲突", "风险", "下调")
+# How many items one outlet may contribute to the material handed to the writer.
+MAX_MATERIAL_PER_SOURCE = 12
 
 
 def _direction(fact: Fact) -> str:
@@ -233,6 +236,30 @@ def rank_news(
         ),
         reverse=True,
     )
+
+
+def diversify_by_source(
+    items: Sequence[ContentItem],
+    *,
+    max_per_source: int = MAX_MATERIAL_PER_SOURCE,
+) -> list[ContentItem]:
+    """Keep at most ``max_per_source`` items per outlet, preserving order.
+
+    The material list is ranked by impact, so high-frequency wires would
+    otherwise fill it and crowd every other feed out of the brief's news
+    sections even though those feeds were collected successfully.
+    """
+    if max_per_source <= 0:
+        return list(items)
+    kept: list[ContentItem] = []
+    seen: Counter[str] = Counter()
+    for item in items:
+        name = _source_name(item)
+        if seen[name] >= max_per_source:
+            continue
+        seen[name] += 1
+        kept.append(item)
+    return kept
 
 
 def _policy_items(news: Sequence[ContentItem]) -> list[NewsBrief]:
@@ -517,8 +544,8 @@ def build_morning_draft(
         for fact in snapshot.facts
         if fact.group == "sector" and fact.status == "ok"
     ]
-    unique_news = rank_news(
-        dedup_news(list(news)), now=now, sector_labels=sector_labels
+    unique_news = diversify_by_source(
+        rank_news(dedup_news(list(news)), now=now, sector_labels=sector_labels)
     )[:max_material_items]
     facts = _with_commodity_notes(list(snapshot.facts), unique_news)
     us_market = describe_market(facts, US_LABELS)

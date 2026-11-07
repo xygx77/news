@@ -17,7 +17,7 @@ import httpx
 from bs4 import BeautifulSoup
 
 from ..config import LaserSiteConfig
-from ..normalize import canonical_url, title_similarity
+from ..normalize import canonical_url, decode_html, title_similarity
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +33,12 @@ _DATE_IN_TEXT = (
     re.compile(r"(\d{4})年(\d{1,2})月(\d{1,2})日"),
 )
 _MONTH_DAY = re.compile(r"(?<!\d)(\d{1,2})-(\d{1,2})(?!\d)")
+# A date (and optional "查看详情" tail) printed at the end of a list-page link.
+_TRAILING_DATE = re.compile(
+    r"[\s·|]*[（(]?\s*"
+    r"(?:20\d{2}[-./年]\d{1,2}[-./月]\d{1,2}日?|\d{1,2}[-/]\d{1,2})"
+    r"\s*[)）]?\s*(?:查看详情)?\s*$"
+)
 
 
 @dataclass(slots=True)
@@ -117,6 +123,31 @@ def parse_date_text(text: str, *, default_year: int | None = None) -> datetime |
     return None
 
 
+def _strip_trailing_date(title: str) -> str:
+    """Remove a trailing date (and "查看详情") from a list-page link label."""
+    cleaned = _TRAILING_DATE.sub("", title).strip()
+    return cleaned if len(cleaned) >= 2 else title
+
+
+def parse_title_date(title: str) -> datetime | None:
+    """Extract a date printed in a link label, e.g. ``... 2026-11-03``.
+
+    Stricter than :func:`parse_date_text`: it only accepts a full date anywhere
+    in the label or a month-day at the very end, so ranges such as ``增长3-5倍``
+    are not mistaken for a publication date.
+    """
+    for pattern in _DATE_IN_TEXT:
+        match = pattern.search(title)
+        if match:
+            parsed = _make_date(*match.groups())
+            if parsed is not None:
+                return parsed
+    match = re.search(r"(?<!\d)(\d{1,2})-(\d{1,2})(?!\d)\s*(?:查看详情)?\s*$", title)
+    if match:
+        return _make_date(str(datetime.now(SHANGHAI).year), match.group(1), match.group(2))
+    return None
+
+
 def _strip_fragment(url: str) -> str:
     parts = urlsplit(url)
     return urlunsplit(parts._replace(fragment=""))
@@ -133,9 +164,11 @@ def _context_text(anchor, levels: int = 2) -> tuple[str, object | None]:
     return "", None
 
 
-def _summary_from_context(anchor, title: str) -> str:
-    text, _ = _context_text(anchor)
+def _summary_from_context(anchor, title: str, *, levels: int = 2) -> str:
+    text, _ = _context_text(anchor, levels)
     summary = text.replace(title, " ", 1).strip()
+    # Drop the leftover date / "查看详情" once the title has been detached.
+    summary = _TRAILING_DATE.sub("", summary).strip()
     return summary[:120]
 
 
@@ -161,11 +194,30 @@ def parse_html_list(html: str, site: LaserSiteConfig) -> list[LaserCandidate]:
             continue
 
         published_at = None
+        title_has_date = False
         if site.date_from_url:
             published_at = parse_date_from_url(url, site.date_regex)
         if published_at is None:
+            # Many list pages print the date inside the link text. Prefer it over
+            # the surrounding container, which often mixes several items and would
+            # give every entry the same (first) date.
+            published_at = parse_title_date(title)
+            title_has_date = published_at is not None
+        if published_at is None:
             context, _ = _context_text(anchor)
             published_at = parse_date_text(context)
+
+        if title_has_date:
+            title = _strip_trailing_date(title)
+            # The date lived in the link, so the enclosing block usually spans
+            # several items: read only the immediate parent, and keep the summary
+            # empty when that parent holds other links (their text is not ours).
+            summary = _summary_from_context(anchor, title, levels=1)
+            parent = anchor.parent
+            if parent is not None and len(parent.find_all("a", href=True)) > 1:
+                summary = ""
+        else:
+            summary = _summary_from_context(anchor, title)
 
         seen.add(url)
         candidates.append(
@@ -173,7 +225,7 @@ def parse_html_list(html: str, site: LaserSiteConfig) -> list[LaserCandidate]:
                 title=title,
                 url=url,
                 published_at=published_at,
-                summary=_summary_from_context(anchor, title),
+                summary=summary,
                 source_name=site.name,
                 weight=site.weight,
                 language=site.language,
@@ -281,14 +333,14 @@ async def fetch_sitemap(
 ) -> list[LaserCandidate]:
     """Fetch a sitemap, following up to three child sitemaps."""
     response = await _get_with_retry(client, site.sitemap_url or "")
-    candidates = list(parse_sitemap(response.text, site))
-    for child in sitemap_children(response.text)[:3]:
+    candidates = list(parse_sitemap(decode_html(response.content, response.charset_encoding), site))
+    for child in sitemap_children(decode_html(response.content, response.charset_encoding))[:3]:
         try:
             child_response = await _get_with_retry(client, child)
         except Exception as exc:  # noqa: BLE001 - one child may fail
             logger.warning("Sitemap child %s failed: %s", child, exc)
             continue
-        candidates.extend(parse_sitemap(child_response.text, site))
+        candidates.extend(parse_sitemap(decode_html(child_response.content, child_response.charset_encoding), site))
 
     result: list[LaserCandidate] = []
     seen: set[str] = set()
@@ -311,7 +363,7 @@ async def fetch_lumentum(
 ) -> list[LaserCandidate]:
     """Lumentum's newsroom links out to investor-relations detail pages."""
     response = await _get_with_retry(client, site.list_url or "")
-    soup = BeautifulSoup(response.text, "html.parser")
+    soup = BeautifulSoup(decode_html(response.content, response.charset_encoding), "html.parser")
     candidates: list[LaserCandidate] = []
     seen: set[str] = set()
     for anchor in soup.find_all("a", href=True):
@@ -423,12 +475,12 @@ async def fetch_site(
                 if fetcher is None:
                     note = "unknown adapter"
                     response = await _get_with_retry(client, site.list_url or "")
-                    parsed = parse_html_list(response.text, site)
+                    parsed = parse_html_list(decode_html(response.content, response.charset_encoding), site)
                 else:
                     parsed = await fetcher(client, site)
             else:
                 response = await _get_with_retry(client, site.list_url or "")
-                parsed = parse_html_list(response.text, site)
+                parsed = parse_html_list(decode_html(response.content, response.charset_encoding), site)
         candidates = parsed[:limit]
         elapsed = int((time.perf_counter() - started) * 1000)
         return candidates, SiteHealth(

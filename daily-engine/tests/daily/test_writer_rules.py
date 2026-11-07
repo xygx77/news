@@ -15,7 +15,7 @@ from src.daily.writer.enrich import (
     extract_summary,
     extract_title,
 )
-from src.daily.writer.rule_finance import build_morning_draft
+from src.daily.writer.rule_finance import build_morning_draft, diversify_by_source
 from src.daily.writer.rule_laser import build_laser_draft
 from src.daily.writer.scoring import (
     LaserItem,
@@ -462,6 +462,24 @@ def _news(title, content, published_at, source_name="东方财富要闻", url=No
         published_at=published_at,
         metadata={"feed_name": source_name},
     )
+
+
+def test_diversify_by_source_caps_one_outlet():
+    news = [
+        _news(f"金十快讯{i}", "央行开展逆回购操作", NOW, "金十数据") for i in range(5)
+    ]
+    news += [
+        _news("界面要闻", "商务部召开新闻发布会", NOW, "界面新闻"),
+        _news("FT观点", "European flights disrupted", NOW, "FT中文网"),
+    ]
+
+    kept = diversify_by_source(news, max_per_source=2)
+    assert [item.metadata["feed_name"] for item in kept] == [
+        "金十数据",
+        "金十数据",
+        "界面新闻",
+        "FT中文网",
+    ]
 
 
 def test_rank_news_puts_market_moving_items_first():

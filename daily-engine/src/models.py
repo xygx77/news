@@ -308,6 +308,9 @@ class RSSSourceConfig(BaseModel):
     enabled: bool = True
     category: Optional[str] = None
     content_extractor: Optional[str] = None
+    # Maximum entries taken from this feed, newest first. Keeps a high-frequency
+    # wire from flooding the daily material list.
+    fetch_limit: Optional[int] = Field(default=None, gt=0)
     profile: ProfileRoute = None
 
 

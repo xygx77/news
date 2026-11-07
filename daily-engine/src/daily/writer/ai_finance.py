@@ -22,6 +22,7 @@ from .rule_finance import (
     _source_name,
     build_morning_draft,
     dedup_news,
+    diversify_by_source,
     rank_news,
 )
 
@@ -470,8 +471,8 @@ async def build_ai_morning_draft(
         for fact in snapshot.facts
         if fact.group == "sector" and fact.status == "ok"
     ]
-    unique_news = rank_news(
-        dedup_news(list(news)), now=now, sector_labels=sector_labels
+    unique_news = diversify_by_source(
+        rank_news(dedup_news(list(news)), now=now, sector_labels=sector_labels)
     )[:max_material_items]
     baseline = build_morning_draft(
         snapshot,

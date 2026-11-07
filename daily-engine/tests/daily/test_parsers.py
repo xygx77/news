@@ -122,6 +122,36 @@ def test_parse_date_from_url_keeps_full_dates():
     )
 
 
+def test_html_list_reads_date_printed_in_link_text():
+    # 大族激光 prints the date at the end of each link and repeats stale dates
+    # in the surrounding container; the link text must win.
+    html = """
+    <ul>
+      <li><div class="item"><a href="/news-status/413.html">冬藏蓄势！大族激光助力年度冲刺 2026-11-03 查看详情</a></div></li>
+      <li><div class="item"><a href="/news-status/412.html">三十而砺，光启新程 2026-01-15 查看详情</a></div></li>
+      <li><div class="item"><a href="/news-status/382.html">2025大族激光年报速读 2026-04-17 查看详情</a></div></li>
+    </ul>
+    """
+    site = LaserSiteConfig(
+        name="大族激光",
+        strategy="html_list",
+        list_url="https://www.hanslaser.com/news-status.html",
+        base_url="https://www.hanslaser.com",
+        url_pattern=r"/news-status/\d+\.html$",
+    )
+    items = parse_html_list(html, site)
+    assert [i.title for i in items] == [
+        "冬藏蓄势！大族激光助力年度冲刺",
+        "三十而砺，光启新程",
+        "2025大族激光年报速读",
+    ]
+    assert [i.published_at.date().isoformat() for i in items] == [
+        "2026-11-03",
+        "2026-01-15",
+        "2026-04-17",
+    ]
+
+
 SITEMAP = """<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>https://www.coherent.com/news/press-releases/new-laser</loc><lastmod>2026-11-05</lastmod></url>

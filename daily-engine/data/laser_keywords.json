@@ -2,27 +2,27 @@
   "categories": [
     {
       "name": "并购融资",
-      "keywords": ["收购", "并购", "融资", "IPO", "上市", "轮"],
+      "keywords": ["收购", "并购", "融资", "IPO", "上市", "轮", "acquisition", "acquires", "merger", "funding"],
       "score": 3
     },
     {
       "name": "业绩",
-      "keywords": ["营收", "净利", "同比", "财报", "季度"],
+      "keywords": ["营收", "净利", "同比", "财报", "季度", "revenue", "earnings", "profit", "quarterly results", "guidance"],
       "score": 3
     },
     {
       "name": "技术突破",
-      "keywords": ["突破", "首次", "研发", "论文", "刷新", "纪录"],
+      "keywords": ["突破", "首次", "研发", "论文", "刷新", "纪录", "breakthrough", "record efficiency", "first demonstration", "research team"],
       "score": 3
     },
     {
       "name": "产品发布",
-      "keywords": ["发布", "推出", "新品", "量产", "交付"],
+      "keywords": ["发布", "推出", "新品", "量产", "交付", "launches", "unveils", "introduces", "ships", "now available"],
       "score": 2
     },
     {
       "name": "标准规范",
-      "keywords": ["标准", "国标", "规范", "认证", "安全"],
+      "keywords": ["标准", "国标", "规范", "认证", "安全", "standard", "certification", "compliance"],
       "score": 2
     },
     {
@@ -38,7 +38,11 @@
         "Coherent",
         "Lumentum",
         "TRUMPF",
-        "通快"
+        "通快",
+        "nLIGHT",
+        "Jenoptik",
+        "MKS",
+        "ams OSRAM"
       ],
       "score": 2
     }

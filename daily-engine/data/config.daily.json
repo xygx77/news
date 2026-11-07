@@ -7,7 +7,9 @@
     "api_key_env": "ZHIPU_API_KEY",
     "temperature": 0.2,
     "max_tokens": 3000,
-    "languages": ["zh"]
+    "languages": [
+      "zh"
+    ]
   },
   "daily": {
     "timezone": "Asia/Shanghai",
@@ -38,7 +40,20 @@
       {
         "name": "东方财富要闻",
         "url": "http://rss.eastmoney.com/rss_partener.xml",
-        "enabled": true
+        "enabled": true,
+        "fetch_limit": 40
+      },
+      {
+        "name": "界面新闻",
+        "url": "https://a.jiemian.com/index.php?m=article&a=rss",
+        "enabled": true,
+        "fetch_limit": 40
+      },
+      {
+        "name": "FT中文网",
+        "url": "https://www.ftchinese.com/rss/news",
+        "enabled": true,
+        "fetch_limit": 20
       }
     ],
     "cnfin": {
@@ -119,10 +134,10 @@
         "strategy": "html_list",
         "list_url": "https://optics.org/news",
         "base_url": "https://optics.org",
-        "url_pattern": "/news/\\d+/[a-z0-9-]+",
+        "url_pattern": "/news/(?!applications|business-news|photonics-world|research-and-development)[a-z0-9][a-z0-9-]*$",
         "date_from_url": false,
         "language": "en",
-        "weight": 1.0,
+        "weight": 0.8,
         "enabled": true
       },
       {
@@ -133,7 +148,7 @@
         "url_pattern": "/news/press-releases/[^/]+$",
         "date_from_url": false,
         "language": "en",
-        "weight": 0.5,
+        "weight": 0.8,
         "enabled": true
       },
       {
@@ -144,7 +159,7 @@
         "url_pattern": "/newsroom/news/[^/]+$",
         "date_from_url": false,
         "language": "en",
-        "weight": 0.5,
+        "weight": 0.8,
         "enabled": true
       },
       {
@@ -156,7 +171,7 @@
         "date_from_url": true,
         "date_regex": "/(?P<y>\\d{4})/(?P<m>\\d{2})/(?P<d>\\d{2})/",
         "language": "en",
-        "weight": 0.5,
+        "weight": 0.8,
         "enabled": true
       },
       {
@@ -167,18 +182,18 @@
         "url_pattern": "/press-releases-content/[^/]+$",
         "date_from_url": false,
         "language": "en",
-        "weight": 0.5,
+        "weight": 0.8,
         "enabled": true
       },
       {
         "name": "大族激光",
-        "strategy": "sitemap",
-        "sitemap_url": "https://www.hanslaser.com/sitemap.xml",
+        "strategy": "html_list",
+        "list_url": "https://www.hanslaser.com/news-status.html",
         "base_url": "https://www.hanslaser.com",
-        "url_pattern": "/(news-focus|news-status)/\\d+\\.html$",
+        "url_pattern": "/news-status/\\d+\\.html$",
         "date_from_url": false,
         "language": "zh",
-        "weight": 0.5,
+        "weight": 1.0,
         "enabled": true
       },
       {
@@ -190,7 +205,7 @@
         "adapter": "lumentum",
         "date_from_url": false,
         "language": "en",
-        "weight": 0.5,
+        "weight": 0.8,
         "enabled": true
       },
       {
@@ -201,7 +216,7 @@
         "url_pattern": "/gsxw/\\d+\\.jhtml",
         "date_from_url": false,
         "language": "zh",
-        "weight": 0.5,
+        "weight": 0.8,
         "enabled": true
       },
       {

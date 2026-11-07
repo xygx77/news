@@ -99,7 +99,11 @@ class RSSScraper(BaseScraper):
         if feed.bozo and not feed.entries:
             raise ValueError("Invalid RSS/Atom feed")
 
-        for ordinal, entry in enumerate(feed.entries, start=1):
+        entries = feed.entries
+        if source.fetch_limit:
+            entries = entries[: source.fetch_limit]
+
+        for ordinal, entry in enumerate(entries, start=1):
             try:
                 published_at = self._parse_date(entry)
                 if not published_at:

@@ -15,6 +15,7 @@ import trafilatura
 from bs4 import BeautifulSoup
 from dateutil.parser import isoparse
 
+from ..normalize import decode_html
 from ..sources.laser import LaserCandidate
 from .scoring import LaserItem
 
@@ -127,7 +128,7 @@ async def enrich_items(
             except Exception as exc:  # noqa: BLE001 - keep list-page summary
                 logger.warning("Article fetch failed for %s: %s", item.url, exc)
                 return item
-        html = response.text
+        html = decode_html(response.content, response.charset_encoding)
         try:
             body = trafilatura.extract(html) or ""
         except Exception as exc:  # noqa: BLE001 - keep list-page summary
