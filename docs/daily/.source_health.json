@@ -5,8 +5,7 @@
   },
   "wallstreetcn": {
     "last_ok": "2026-11-08",
-    "consecutive_failures": 0,
-    "last_failure": "2026-11-07"
+    "consecutive_failures": 0
   },
   "rss": {
     "last_ok": "2026-11-08",
@@ -14,26 +13,23 @@
   },
   "激光制造网": {
     "last_ok": "2026-11-08",
-    "consecutive_failures": 0,
-    "last_failure": "2026-11-06"
+    "consecutive_failures": 0
   },
   "OFweek激光": {
     "last_ok": "2026-11-08",
     "consecutive_failures": 0
   },
   "Industrysourcing激光频道": {
-    "last_ok": "2026-11-05",
-    "consecutive_failures": 3,
-    "last_failure": "2026-11-08"
+    "last_ok": "2026-11-08",
+    "consecutive_failures": 0
   },
   "European Optical Society": {
     "last_ok": "2026-11-08",
     "consecutive_failures": 0
   },
   "激光世界中文版": {
-    "last_failure": "2026-11-05",
-    "consecutive_failures": 0,
-    "last_ok": "2026-11-08"
+    "last_ok": "2026-11-08",
+    "consecutive_failures": 0
   },
   "中国光学光电子行业协会": {
     "last_ok": "2026-11-08",
