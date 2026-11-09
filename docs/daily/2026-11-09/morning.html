@@ -1,0 +1,661 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>开盘前晨报 | 2026年11月9日</title>
+  <style>
+    :root {
+      --ink: #26282b;
+      --muted: #5f6b76;
+      --paper: #fff;
+      --bg: #eef0f2;
+      --accent: #1a3a5c;
+      --accent-2: #2e5d8c;
+      --accent-3: #8b5e34;
+      --table-head: var(--accent);
+      --rule: #b7c9d8;
+      --line: #dfe3e8;
+      --soft: #f3f6f8;
+      --callout-bg: #f0f4f8;
+      --blue: var(--accent);
+      --page-w: 210mm;
+      --page-h: 297mm;
+      --page-pad-top: 20mm;
+      --page-pad-x: 22mm;
+      --page-pad-bottom: 18mm;
+      --content-w: calc(var(--page-w) - var(--page-pad-x) * 2);
+      --content-h: calc(var(--page-h) - var(--page-pad-top) - var(--page-pad-bottom));
+      --column-gap: 36px;
+    }
+
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "Noto Serif SC", "Source Han Serif SC", "Songti SC", "SimSun", Georgia, serif;
+      font-size: 10.5pt;
+      line-height: 1.72;
+    }
+    body { padding: 14px 0 18px; overflow-x: hidden; }
+    #source {
+      position: fixed;
+      left: -99999px;
+      top: 0;
+      width: var(--content-w);
+      visibility: hidden;
+      pointer-events: none;
+    }
+    #pages {
+      counter-reset: source-item;
+      display: grid;
+      grid-template-columns: repeat(var(--page-columns, 1), max-content);
+      justify-content: center;
+      align-items: start;
+      gap: 14px 18px;
+      padding: 0 12px;
+    }
+    .viewer-tools {
+      position: fixed;
+      top: 10px;
+      left: 50%;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      width: max-content;
+      margin: 0;
+      padding: 3px;
+      background: rgba(255, 255, 255, .9);
+      border: 1px solid #d7dce5;
+      border-radius: 5px;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, .1);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateX(-50%) translateY(-8px);
+      transition: opacity .16s ease, transform .16s ease;
+    }
+    .viewer-tools.is-visible {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateX(-50%) translateY(0);
+    }
+    .viewer-tools button {
+      width: 22px;
+      height: 22px;
+      padding: 0;
+      border: 1px solid #c6cfdd;
+      border-radius: 4px;
+      background: #fff;
+      color: var(--accent);
+      font-size: 14px;
+      line-height: 1;
+      cursor: pointer;
+    }
+    .viewer-tools button:hover { background: var(--soft); }
+    .viewer-tools output {
+      min-width: 38px;
+      color: #303846;
+      font-size: 11px;
+      text-align: center;
+      font-variant-numeric: tabular-nums;
+    }
+    .page-frame { width: var(--page-w); height: var(--page-h); margin: 0; }
+    .page {
+      width: var(--page-w);
+      height: var(--page-h);
+      margin: 0;
+      padding: var(--page-pad-top) var(--page-pad-x) var(--page-pad-bottom);
+      background: var(--paper);
+      border: 1px solid #dedede;
+      box-shadow: 0 1px 1px rgba(0,0,0,.05), 0 10px 34px rgba(0,0,0,.14);
+      position: relative;
+      overflow: hidden;
+      transform: scale(var(--page-scale, 1));
+      transform-origin: top left;
+    }
+    .page-content {
+      width: var(--content-w);
+      height: var(--content-h);
+      overflow: hidden;
+    }
+    .folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 9mm;
+      color: #888;
+      font-size: 9pt;
+      text-align: center;
+    }
+    .doc-flow {
+      width: var(--content-w);
+      background: var(--paper);
+      counter-reset: source-item;
+    }
+    .column-flow {
+      height: var(--content-h);
+      column-width: var(--content-w);
+      column-gap: var(--column-gap);
+      column-fill: auto;
+    }
+    .measure-flow {
+      position: fixed;
+      left: -99999px;
+      top: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+    .page-slice {
+      transform: translateX(calc(var(--slice-index) * -1 * (var(--content-w) + var(--column-gap))));
+      transform-origin: top left;
+    }
+    h1, h2, h3 {
+      color: var(--blue);
+      line-height: 1.28;
+      margin: 0;
+      font-weight: 700;
+      letter-spacing: 0;
+    }
+    h1 { font-size: 22pt; margin: 1mm 0 2.5mm; }
+    h2 { font-size: 15pt; padding-bottom: 3pt; border-bottom: 1px solid var(--rule); margin: 7mm 0 4mm; }
+    h3 { font-size: 12pt; margin: 5mm 0 2.5mm; }
+    .doc-flow > .flow-block:first-child h2,
+    .doc-flow > .flow-block:first-child h3 { margin-top: 0; }
+    p { margin: 0 0 3.5mm; text-align: justify; text-justify: inter-ideograph; }
+    ul, ol { margin: 2mm 0 4mm 0; padding-left: 16pt; }
+    li { margin: 0 0 2mm; }
+    table { width: 100%; border-collapse: collapse; margin: 3mm 0 4mm; font-size: 9.2pt; line-height: 1.5; break-inside: auto; page-break-inside: auto; }
+    thead { display: table-header-group; }
+    tfoot { display: table-footer-group; }
+    tr { break-inside: avoid; page-break-inside: avoid; }
+    th { background: var(--table-head); color: #fff; text-align: left; font-weight: 700; padding: 2.8mm 2.4mm; }
+    td { padding: 2.4mm 2.4mm; vertical-align: top; border-bottom: 1px solid #e7e7e7; }
+    tbody tr:nth-child(even) td { background: var(--soft); }
+    tbody tr:last-child td { border-bottom: 1.4px solid #303030; }
+    caption {
+      caption-side: bottom;
+      color: var(--muted);
+      font-size: 8.6pt;
+      padding-top: 1.5mm;
+      text-align: left;
+    }
+    .title-block { border-top: 2.5px solid var(--accent); padding-top: 4mm; margin-bottom: 2mm; }
+    .report-kicker { color: var(--accent-2); font-size: 8.8pt; font-weight: 700; margin-bottom: 1mm; letter-spacing: 0.5pt; }
+    .subtitle { color: var(--blue); font-size: 13pt; font-weight: 700; line-height: 1.38; margin: 0 0 2.5mm; max-width: 145mm; }
+    .meta {
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+      color: #444;
+      display: grid;
+      font-size: 9pt;
+      gap: 2mm;
+      grid-template-columns: 1fr 1fr 1fr;
+      margin: 0 0 3mm;
+      padding: 2mm 0;
+      text-align: left;
+    }
+    .lead { font-size: 10.8pt; line-height: 1.72; margin-bottom: 4mm; }
+    .callout { border-left: 3px solid var(--blue); background: var(--callout-bg); padding: 3.5mm 4.5mm; margin: 4mm 0; }
+    .callout-title { font-weight: 700; color: var(--accent); margin-bottom: 1.5mm; font-size: 10.5pt; }
+    .callout.warn { border-left-color: #c9a44d; background: #fdf8ec; }
+    .small { font-size: 9pt; color: var(--muted); }
+    .source-item { counter-increment: source-item; color: #444; font-size: 8.6pt; line-height: 1.5; margin: 0 0 3mm; padding-left: 16pt; position: relative; }
+    .source-item::before { content: counter(source-item) "."; position: absolute; left: 0; top: 0; }
+    a { color: var(--blue); text-decoration: none; }
+    .tag { display: inline-block; padding: 0.8mm 2mm; border-radius: 2px; font-size: 8.5pt; font-weight: 700; margin-right: 2mm; }
+    .tag-up { background: #e8f5e9; color: #2e7d32; }
+    .tag-down { background: #ffebee; color: #c62828; }
+    .tag-flat { background: #f5f5f5; color: #616161; }
+    .highlight-box { background: var(--soft); padding: 3mm 4mm; margin: 3mm 0; border-radius: 2px; }
+    .doc-topbar { display: none; }
+
+    @page { size: A4; margin: var(--page-pad-top) var(--page-pad-x) var(--page-pad-bottom); }
+    @media print {
+      html, body { padding: 0; background: white; }
+      .viewer-tools { display: none; }
+      #pages { display: none !important; }
+      #source {
+        position: static;
+        visibility: visible;
+        pointer-events: auto;
+        width: auto;
+      }
+    }
+    /* ===== mobile-read: begin =====
+       Phones get a flowing article instead of the scaled A4 canvas: at 390px
+       wide the canvas is pinned to scale .58 (=> ~8px body text) and cropped
+       ~35px on both edges. Print and desktop keep the A4 paged view.
+       Keep this block byte-identical in morning.html and laser.html. */
+    @media screen and (max-width: 820px) {
+      html, body {
+        font-size: 16px;
+        line-height: 1.75;
+        -webkit-text-size-adjust: 100%;
+      }
+      body { padding: 0 0 32px; }
+
+      #pages, .viewer-tools, .folio { display: none; }
+
+      .doc-topbar {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 12px;
+        max-width: 760px;
+        margin: 12px auto 0;
+        padding: 0 19px;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+        font-size: 13px;
+        font-weight: 500;
+        line-height: 1.5;
+        color: var(--muted);
+        font-variant-numeric: tabular-nums;
+      }
+      .doc-topbar a { color: var(--accent-2); text-decoration: none; }
+      .doc-topbar a:hover,
+      .doc-topbar a:focus-visible {
+        text-decoration: underline;
+        text-underline-offset: 3px;
+      }
+
+      #source {
+        position: static;
+        left: auto;
+        top: auto;
+        width: auto;
+        max-width: 760px;
+        visibility: visible;
+        pointer-events: auto;
+        margin: 10px auto 0;
+        padding: 20px 18px 26px;
+        background: var(--paper);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        overflow-wrap: anywhere;
+      }
+
+      h1 { font-size: 25px; margin: 2px 0 8px; }
+      h2 { font-size: 19px; margin: 26px 0 12px; padding-bottom: 6px; }
+      h3 { font-size: 16.5px; margin: 20px 0 8px; }
+      p { margin: 0 0 14px; }
+      ul, ol { margin: 8px 0 14px; padding-left: 20px; }
+      li { margin: 0 0 8px; }
+
+      .title-block { padding-top: 12px; margin-bottom: 8px; }
+      .report-kicker { font-size: 12px; margin-bottom: 4px; }
+      .subtitle { font-size: 17px; margin: 0 0 10px; max-width: none; }
+      .meta {
+        grid-template-columns: 1fr;
+        gap: 4px;
+        font-size: 13px;
+        padding: 8px 0;
+        margin: 0 0 14px;
+      }
+      .lead { font-size: 16px; }
+      .small { font-size: 13px; }
+      .callout { padding: 14px 16px; margin: 16px 0; }
+      .callout-title { font-size: 15px; margin-bottom: 6px; }
+      .highlight-box { padding: 12px 14px; margin: 12px 0; }
+      .source-item { font-size: 13px; }
+      .tag { font-size: 12px; }
+      .laser-item { margin-bottom: 20px; }
+      .laser-item h3 { font-size: 16.5px; line-height: 1.5; }
+
+      table {
+        font-size: 14px;
+        line-height: 1.6;
+        margin: 10px 0 14px;
+      }
+      th, td { padding: 8px 6px; overflow-wrap: anywhere; }
+      th { font-size: 13px; white-space: nowrap; }
+      table .tag { white-space: nowrap; }
+      caption { font-size: 12.5px; padding-top: 6px; }
+    }
+    /* ===== mobile-read: end ===== */
+  </style>
+</head>
+<body>
+  <nav class="viewer-tools" aria-label="预览缩放">
+    <button type="button" data-zoom="out" title="缩小" aria-label="缩小">−</button>
+    <output id="zoom-value" aria-live="polite">100%</output>
+    <button type="button" data-zoom="in" title="放大" aria-label="放大">+</button>
+    <button type="button" data-zoom="reset" title="适合宽度" aria-label="适合宽度">↺</button>
+  </nav>
+
+  <nav class="doc-topbar" aria-label="返回首页">
+    <a href="../index.html">← 每日简报</a>
+  </nav>
+
+  <main id="source" class="doc-flow">
+    <section class="flow-block title-block">
+      <p class="report-kicker">每日市场前瞻</p>
+      <h1>开盘前晨报</h1>
+      <p class="subtitle">2026年11月9日 | 星期一</p>
+      <div class="meta">
+        <span>编制日期：2026-11-09</span>
+        <span>市场：A股 / 港股 / 美股</span>
+        <span>信息来源：公开数据整理</span>
+      </div>
+    </section>
+
+    <section class="flow-block">
+      <div class="callout warn">
+        <div class="callout-title">交易状态提示</div>
+        <p style="margin:0;">今日为交易日（北京时间 2026-11-09），A 股数据为上一交易日收盘，海外数据为刚结束的美股交易日。</p>
+      </div>
+    </section>
+
+    <section class="flow-block">
+      <h2>核心要点</h2>
+      <div class="callout">
+        <div class="callout-title">今日导读</div>
+        <ul>
+          <li>A 股收盘：上证指数 3649.16（+0.00%），深证成指 11175.78（+0.00%），创业板指 2465.23（+0.00%），科创50 1253.20（+0.00%），沪深300 4054.14（+0.00%）。</li>
+          <li>美股三大指数涨跌不一，道琼斯 51285.73（-0.46%），标普500 7376.86（+0.31%），纳斯达克 24579.42（+1.09%）。</li>
+          <li>商品与汇率：WTI 原油 90.59（-0.26%），布伦特原油 97.72（-0.61%），COMEX 黄金 4105.30（+0.75%），COMEX 白银 52.56（+1.19%），美元指数 102.22（-0.07%）。</li>
+          <li>强劲非农提振加息预期，上周五美元大涨，纳指反弹1%，芯片股技术性反弹。</li>
+        </ul>
+      </div>
+    </section>
+
+    
+    <section class="flow-block">
+      <h2>一、A股主要指数（上一交易日收盘）</h2>
+      <table>
+        <thead>
+          <tr><th>指数</th><th>收盘点位</th><th>涨跌幅</th><th>备注</th></tr>
+        </thead>
+        <tbody>
+                    <tr><td>上证指数</td><td>3649.16</td><td><span class="tag tag-flat">+0.00%</span></td><td></td></tr>
+          <tr><td>深证成指</td><td>11175.78</td><td><span class="tag tag-flat">+0.00%</span></td><td></td></tr>
+          <tr><td>创业板指</td><td>2465.23</td><td><span class="tag tag-flat">+0.00%</span></td><td></td></tr>
+          <tr><td>科创50</td><td>1253.20</td><td><span class="tag tag-flat">+0.00%</span></td><td></td></tr>
+          <tr><td>沪深300</td><td>4054.14</td><td><span class="tag tag-flat">+0.00%</span></td><td></td></tr>
+        </tbody>
+        <caption>数据来源：<a href="https://quote.eastmoney.com/">东方财富</a></caption>
+      </table>
+      <p>两市成交额 <strong>暂缺</strong>；全市场涨跌家数暂缺。A股市场整体呈现震荡反弹格局，主要指数回升。</p>
+    </section>
+    
+
+    <section class="flow-block">
+      <h2>二、利率与汇率</h2>
+      <table>
+        <thead>
+          <tr><th>品种</th><th>最新价 / 收益率</th><th>变动</th><th>备注</th></tr>
+        </thead>
+        <tbody>
+                    <tr><td>美元指数</td><td>102.22</td><td><span class="tag tag-down">-0.07%</span></td><td></td></tr>
+          <tr><td>美元兑离岸人民币</td><td>6.67</td><td><span class="tag tag-down">-0.04%</span></td><td></td></tr>
+          <tr><td>欧元/美元</td><td>1.11</td><td><span class="tag tag-up">+0.08%</span></td><td></td></tr>
+          <tr><td>英镑/美元</td><td>1.34</td><td><span class="tag tag-up">+0.07%</span></td><td></td></tr>
+          <tr><td>美元/日元</td><td>158.30</td><td><span class="tag tag-down">-0.12%</span></td><td></td></tr>
+          <tr><td>美国 2 年期国债</td><td>4.46%</td><td><span class="tag tag-down">-12BP</span></td><td></td></tr>
+          <tr><td>美国 10 年期国债</td><td>4.84%</td><td><span class="tag tag-down">-6BP</span></td><td></td></tr>
+          <tr><td>美国 30 年期国债</td><td>5.25%</td><td><span class="tag tag-down">-3BP</span></td><td></td></tr>
+          <tr><td>中国 10 年期国债</td><td>1.59%</td><td><span class="tag tag-down">-1.7BP</span></td><td></td></tr>
+          <tr><td>中国 30 年期国债</td><td>2.03%</td><td><span class="tag tag-down">-1.5BP</span></td><td></td></tr>
+          <tr><td>美元兑人民币中间价</td><td>6.7168</td><td><span class="tag tag-up">+0.02%</span></td><td></td></tr>
+        </tbody>
+        <caption>数据来源：<a href="https://quote.eastmoney.com/">东方财富</a>、<a href="https://fred.stlouisfed.org/series/DGS2">FRED</a>、<a href="https://fred.stlouisfed.org/series/DGS10">FRED</a>、<a href="https://fred.stlouisfed.org/series/DGS30">FRED</a>、<a href="https://yield.chinabond.com.cn/">中国债券信息网</a>、<a href="https://www.chinamoney.com.cn/chinese/bkccpr/">中国外汇交易中心</a></caption>
+      </table>
+      <p>美债 2Y/10Y/30Y 收益率来自 FRED。</p>
+    </section>
+
+    <section class="flow-block">
+      <h2>三、大宗商品</h2>
+      <table>
+        <thead>
+          <tr><th>品种</th><th>最新价</th><th>涨跌</th><th>驱动因素</th></tr>
+        </thead>
+        <tbody>
+                    <tr><td>WTI 原油</td><td>90.59</td><td><span class="tag tag-down">-0.26%</span></td><td>每日精选 国务院常务会议 ： 国务院总理李强主持召开国务院常务会议，会议指出，要用好用足各项政策性资金，及时足额拨付涉及基层和企业各类款项，更好发挥财政金融协同…（东方财富要闻）</td></tr>
+          <tr><td>布伦特原油</td><td>97.72</td><td><span class="tag tag-down">-0.61%</span></td><td>每日精选 国务院常务会议 ： 国务院总理李强主持召开国务院常务会议，会议指出，要用好用足各项政策性资金，及时足额拨付涉及基层和企业各类款项，更好发挥财政金融协同…（东方财富要闻）</td></tr>
+          <tr><td>COMEX 黄金</td><td>4105.30</td><td><span class="tag tag-up">+0.75%</span></td><td>强劲非农提振加息预期，上周五美元大涨，纳指反弹1%，芯片股技术性反弹。（华尔街见闻）</td></tr>
+          <tr><td>COMEX 白银</td><td>52.56</td><td><span class="tag tag-up">+1.19%</span></td><td>近期，深圳证券交易所市场回购增持动作密集，真金白银传递产业信心。（华尔街见闻）</td></tr>
+          <tr><td>COMEX 铜</td><td>6.29</td><td><span class="tag tag-up">+0.91%</span></td><td>随着2026年公募基金三季报披露收官，行业最新规模与持仓图谱正式浮出水面。（东方财富要闻）</td></tr>
+        </tbody>
+        <caption>数据来源：<a href="https://quote.eastmoney.com/">东方财富</a></caption>
+      </table>
+      <p>WTI 原油、布伦特原油、COMEX 黄金/白银与铜来自东方财富；缺失项标暂缺。</p>
+    </section>
+
+    <section class="flow-block">
+      <h2>四、隔夜海外市场</h2>
+      <h3>美股</h3>
+      <p>美股三大指数涨跌不一，道琼斯 51285.73（-0.46%），标普500 7376.86（+0.31%），纳斯达克 24579.42（+1.09%）。 美国非农数据强劲，提振加息预期，美元大涨，纳指反弹，芯片股技术性反弹。</p>
+      <h3>欧洲</h3>
+      <p>欧洲主要指数收跌，德国 DAX 25820.36（-1.92%），英国富时100 10673.94（-1.01%），法国 CAC40 8139.00（-0.81%），欧洲斯托克50 6170.49（-0.98%）。 欧洲市场受经济数据预期影响，德国DAX、英国富时100和法国CAC40均出现下跌。</p>
+      <h3>亚太</h3>
+      <p>亚太主要指数涨跌不一，恒生指数 24481.86（-1.27%），日经225 58693.64（+2.19%），韩国 KOSPI 5077.42（+0.35%）。 亚太市场方面，日经225指数上涨，韩国KOSPI指数微涨，而日本东证指数也出现上涨。</p>
+    </section>
+
+    
+    <section class="flow-block">
+      <h2>五、热点板块与异动解析</h2>
+      <div class="callout"><div class="callout-title">涨幅居前</div><p class="small">暂缺</p></div><div class="callout warn"><div class="callout-title">跌幅居前</div><p class="small">暂缺</p></div>
+    </section>
+    
+
+    <section class="flow-block">
+      <h2>六、政策与宏观数据</h2>
+      <h3>政策</h3><ul><li><a href="https://wallstreetcn.com/livenews/3196532">强劲非农提振加息预期，上周五美元大涨，纳指反弹1%，芯片股技术性反弹。</a><br><span class="small">强劲非农提振加息预期，上周五美元大涨，纳指反弹1%，芯片股技术性反弹。（华尔街见闻）</span></li><li><a href="http://finance.eastmoney.com/news/1354,202611093925717340.html">公募基金三季报披露收官 持仓版图浮现</a><br><span class="small">公募基金三季报披露收官，行业最新规模与持仓图谱正式浮出水面。（东方财富要闻）</span></li><li><a href="https://wallstreetcn.com/livenews/3196527">近期，深圳证券交易所市场回购增持动作密集，真金白银传递产业信心。</a><br><span class="small">深圳证券交易所市场回购增持动作密集，传递产业信心。（华尔街见闻）</span></li><li><a href="https://wallstreetcn.com/livenews/3196523">① 09:30 中国10月CPI、PPI； ② 15:00 德国9月贸易帐； ③ 17:30 欧元区11月Senti…</a><br><span class="small">① 09:30 中国10月CPI、PPI； ② 15:00 德国9月贸易帐； ③ 17:30 欧元区11月Sentix投资者信心指数； ④ 23:00 美国9月…（华尔街见闻）</span></li><li><a href="http://finance.eastmoney.com/news/11158,202611083925667993.html">东方财富财经早餐 11月9日周一</a><br><span class="small">每日精选 国务院常务会议 ： 国务院总理李强主持召开国务院常务会议，会议指出，要用好用足各项政策性资金，及时足额拨付涉及基层和企业各类款项，更好发挥财政金融协同…（东方财富要闻）</span></li></ul><h3>宏观数据与产业</h3><ul><li><a href="http://finance.eastmoney.com/news/1354,202611083925641754.html">光芯片独角兽要IPO了！华为、比亚迪持续加注</a><br><span class="small">常州光芯片 独角兽 ，要IPO了。（东方财富要闻）</span></li><li><a href="http://finance.eastmoney.com/news/1344,202611093925765354.html">IPO周报｜A股本周暂无新股申购 富士康、欣旺达供应商周二上市</a><br><span class="small">本周A股暂无新股申购。（东方财富要闻）</span></li><li><a href="https://wallstreetcn.com/livenews/3196525">今年以来，港股IPO市场使用绿鞋机制规模已超去年全年。</a><br><span class="small">今年以来，港股IPO市场使用绿鞋机制规模已超去年全年。（华尔街见闻）</span></li><li><a href="https://wallstreetcn.com/livenews/3196470">华新建材公告，公司拟以预估约90.337亿巴西雷亚尔（约16.42亿美元，并根据交割日财务报表净债务和营运资金进行调整）…</a><br><span class="small">华新建材公告拟进行大规模并购。（华尔街见闻）</span></li><li><a href="http://finance.eastmoney.com/news/1344,202611093925757687.html">关不上的弹窗｜弹窗广告总能盯上老年人背后：上了三个技术手段</a><br><span class="small">一部老人的手机，屏幕上方是“今日已自动入账0.（东方财富要闻）</span></li></ul><h3>公司公告与业绩预告</h3><ul><li><a href="https://www.jiemian.com/article/15305539.html">IPO雷达｜合同负债连降，冠礼科技的成长红利期还在吗？</a><br><span class="small">冠礼科技近三年累计研发投入约 1.（界面新闻）</span></li><li><a href="https://wallstreetcn.com/livenews/3196548">下半年以来，被给予“理财替代”厚望的“固收+”产品遭遇净值滑坡，尽管平均跌幅不大，但部分基金跌幅却超过20%甚至30%，…</a><br><span class="small">下半年以来，被给予“理财替代”厚望的“固收+”产品遭遇净值滑坡，尽管平均跌幅不大，但部分基金跌幅却超过20%甚至30%，净值大幅震荡，大大超出持有人的预想。（华尔街见闻）</span></li><li><a href="http://finance.eastmoney.com/news/11158,202611093925720951.html">11月9日国内四大证券报纸、重要财经媒体头版头条内容精华摘要</a><br><span class="small">11月9日(星期一)，今日报刊头条主要内容精华如下： 中国证券报 稳市政策组合拳持续加码 A股长期向好逻辑进一步明确 11月6日召开的国务院常务会议指出，完善资…（东方财富要闻）</span></li><li><a href="http://finance.eastmoney.com/news/1354,202611083925649565.html">震动A股！牛股华新建材放大招 拟砸百亿跨境并购</a><br><span class="small">【导读】 华新建材 拟出资近110亿元，拿下巴西第二大 水泥 生产商99.（东方财富要闻）</span></li><li><a href="http://stock.eastmoney.com/news/11868,202611093925752234.html">ETF追踪丨11月6日股票型ETF净申购107亿元 资金加仓科创半导体ETF华夏</a><br><span class="small">东方财富 Choice数据显示，11月6日，ETF资金整体净流入126.（东方财富要闻）</span></li></ul>
+    </section>
+
+    <section class="flow-block">
+      <h2>七、今日财经日历</h2>
+      <table>
+        <thead>
+          <tr><th>时间（北京时间）</th><th>数据 / 事件</th><th>类型</th></tr>
+        </thead>
+        <tbody>
+                    <tr><td>00:00</td><td>2026年双十一</td><td>双十一</td></tr>
+          <tr><td>00:00</td><td>加蓬总统恩圭马等外国领导人将出席第九届中国国际进口博览会</td><td>其他会议</td></tr>
+          <tr><td>00:00</td><td>第九届中国国际进口博览会</td><td>行业会议</td></tr>
+          <tr><td>00:00</td><td>韩正将作为习近平主席特别代表赴土耳其出席《联合国气候变化框架公约》第三十一次缔约方大会领导人峰会并访问格鲁吉亚</td><td>其他会议</td></tr>
+          <tr><td>00:00</td><td>何立峰将赴加拿大主持第二次中加经济财金战略对话</td><td>其他会议</td></tr>
+          <tr><td>00:00</td><td>Web·Summit·Lisbon·2026</td><td>行业会议</td></tr>
+          <tr><td>00:00</td><td>第31届联合国气候变化大会(COP31)</td><td>行业会议</td></tr>
+          <tr><td>03:00</td><td>美国:消费信贷总计:折年率:季调(报告期:2026年09月)</td><td>经济数据</td></tr>
+          <tr><td>09:30</td><td>中国:CPI:环比(报告期:2026年10月)</td><td>经济数据</td></tr>
+          <tr><td>09:30</td><td>中国:CPI:累计同比(报告期:2026年10月)</td><td>经济数据</td></tr>
+          <tr><td>09:30</td><td>中国:CPI:同比(报告期:2026年10月)</td><td>经济数据</td></tr>
+          <tr><td>09:30</td><td>中国:PPI:全部工业品:环比(报告期:2026年10月)</td><td>经济数据</td></tr>
+          <tr><td>09:30</td><td>中国:PPI:全部工业品:累计同比(报告期:2026年10月)</td><td>经济数据</td></tr>
+          <tr><td>09:30</td><td>中国:PPI:全部工业品:同比(报告期:2026年10月)</td><td>经济数据</td></tr>
+          <tr><td>15:00</td><td>德国:贸易顺差:季调(报告期:2026年09月)</td><td>经济数据</td></tr>
+          <tr><td>15:00</td><td>德国:贸易顺差:季调(报告期:2026年10月)</td><td>经济数据</td></tr>
+          <tr><td>16:00</td><td>中国台湾：台湾:进口总额:同比:美元(报告期:2026年10月)</td><td>经济数据</td></tr>
+        </tbody>
+        <caption>数据来源：<a href="https://data.eastmoney.com/cjrl/">东方财富财经日历</a></caption>
+      </table>
+    </section>
+
+    <section class="flow-block">
+      <h2>八、风险提示</h2>
+      <div class="callout">
+        <div class="callout-title">重点关注</div>
+        <ul>
+          <li>6只连续涨停板股票提示风险！（东方财富要闻）</li><li>英伟达遭遇大劫案，超7600万元货物离奇失踪；苹果研究团队披露机器人“大脑”进展</li><li>华泰证券：全球AI算力侧投资加码有望驱动光通信板块归母净利润延续高增长</li>
+        </ul>
+      </div>
+    </section>
+
+    <p class="small" style="margin-top:6mm;">机构观点，不构成投资建议。数据截至 2026-11-09 08:55（北京时间）。未获取项：成交额、涨跌家数。</p>
+  </main>
+
+  <div id="pages" aria-label="分页文档"></div>
+
+  <script>
+    (() => {
+      const BASE_WIDTH = 794;
+      const BASE_HEIGHT = 1123;
+      const SIDE_GAP = 28;
+      const MIN_SCALE = 0.58;
+      const MAX_SCALE = 1.28;
+      const TWO_COLUMN_SCALE = 0.74;
+      // Must match the "mobile-read" media query in the stylesheet above.
+      const MOBILE_MAX_WIDTH = 820;
+      const mobileQuery = window.matchMedia(`(max-width: ${MOBILE_MAX_WIDTH}px)`);
+      const source = document.getElementById("source");
+      const pages = document.getElementById("pages");
+      const viewerTools = document.querySelector(".viewer-tools");
+      const zoomValue = document.getElementById("zoom-value");
+      let userScale = null;
+      let zoomToolsTimer = 0;
+
+      function createPage(index) {
+        const frame = document.createElement("div");
+        frame.className = "page-frame";
+        const page = document.createElement("article");
+        page.className = "page";
+        const content = document.createElement("div");
+        content.className = "page-content";
+        const slice = document.createElement("div");
+        slice.className = "doc-flow column-flow page-slice";
+        slice.style.setProperty("--slice-index", index);
+        slice.innerHTML = source.innerHTML;
+        const folio = document.createElement("div");
+        folio.className = "folio";
+        folio.textContent = String(index + 1);
+        content.appendChild(slice);
+        page.append(content, folio);
+        frame.appendChild(page);
+        pages.appendChild(frame);
+      }
+
+      function createMeasure() {
+        const measure = document.createElement("div");
+        measure.className = "doc-flow column-flow measure-flow";
+        measure.innerHTML = source.innerHTML;
+        document.body.appendChild(measure);
+        return measure;
+      }
+
+      function pageCountFor(measure) {
+        const contentHeight = document.querySelector(".page-content")?.clientHeight || measure.clientHeight;
+        const sourceHeight = source.scrollHeight;
+        return Math.max(1, Math.ceil(sourceHeight / contentHeight));
+      }
+
+      function paginate() {
+        pages.innerHTML = "";
+        const measure = createMeasure();
+        const count = pageCountFor(measure);
+        measure.remove();
+        for (let index = 0; index < count; index += 1) createPage(index);
+      }
+
+      function clamp(value, min, max) {
+        return Math.min(max, Math.max(min, value));
+      }
+
+      function fitScale() {
+        return Math.min(1, Math.max(MIN_SCALE, (window.innerWidth - SIDE_GAP) / BASE_WIDTH));
+      }
+
+      function pageColumns(scale) {
+        const twoColumnWidth = BASE_WIDTH * scale * 2 + 18 + SIDE_GAP;
+        return scale <= TWO_COLUMN_SCALE && pages.children.length > 1 && window.innerWidth >= twoColumnWidth ? 2 : 1;
+      }
+
+      function applyScale(scale) {
+        document.documentElement.style.setProperty("--page-scale", scale.toFixed(4));
+        document.documentElement.style.setProperty("--page-columns", pageColumns(scale));
+        document.querySelectorAll(".page-frame").forEach((frame) => {
+          frame.style.width = `${BASE_WIDTH * scale}px`;
+          frame.style.height = `${BASE_HEIGHT * scale}px`;
+        });
+        zoomValue.textContent = `${Math.round(scale * 100)}%`;
+      }
+
+      function fitPages() {
+        applyScale(userScale ?? fitScale());
+      }
+
+      function showZoomTools() {
+        viewerTools.classList.add("is-visible");
+        clearTimeout(zoomToolsTimer);
+        zoomToolsTimer = setTimeout(() => {
+          viewerTools.classList.remove("is-visible");
+        }, 1050);
+      }
+
+      function zoomBy(delta) {
+        if (mobileQuery.matches) return;
+        const current = userScale ?? fitScale();
+        userScale = clamp(current + delta, MIN_SCALE, MAX_SCALE);
+        applyScale(userScale);
+        showZoomTools();
+      }
+
+      function resetZoom() {
+        userScale = null;
+        fitPages();
+        showZoomTools();
+      }
+
+      function syncLayout() {
+        if (mobileQuery.matches) {
+          pages.innerHTML = "";
+          viewerTools.classList.remove("is-visible");
+          return;
+        }
+        paginate();
+        fitPages();
+      }
+
+      syncLayout();
+      if (mobileQuery.addEventListener) {
+        mobileQuery.addEventListener("change", syncLayout);
+      } else if (mobileQuery.addListener) {
+        mobileQuery.addListener(syncLayout);
+      }
+      window.addEventListener("resize", () => {
+        if (!mobileQuery.matches) fitPages();
+      });
+      window.addEventListener("wheel", (event) => {
+        if (!event.ctrlKey && !event.metaKey) return;
+        if (mobileQuery.matches) return;
+        event.preventDefault();
+        zoomBy(event.deltaY > 0 ? -0.04 : 0.04);
+      }, { passive: false });
+      window.addEventListener("keydown", (event) => {
+        if (!event.ctrlKey && !event.metaKey) return;
+        if (event.key === "+" || event.key === "=") {
+          event.preventDefault();
+          zoomBy(0.08);
+        }
+        if (event.key === "-" || event.key === "_") {
+          event.preventDefault();
+          zoomBy(-0.08);
+        }
+        if (event.key === "0") {
+          event.preventDefault();
+          resetZoom();
+        }
+      });
+      viewerTools.addEventListener("click", (event) => {
+        const action = event.target?.dataset?.zoom;
+        if (action === "in") zoomBy(0.08);
+        if (action === "out") zoomBy(-0.08);
+        if (action === "reset") resetZoom();
+        event.target?.blur?.();
+      });
+      window.addEventListener("beforeprint", () => {
+        document.documentElement.style.setProperty("--page-scale", "1");
+        document.documentElement.style.setProperty("--page-columns", "1");
+        document.querySelectorAll(".page-frame").forEach((frame) => {
+          frame.style.width = "";
+          frame.style.height = "";
+        });
+      });
+      window.addEventListener("afterprint", fitPages);
+    })();
+  </script>
+</body>
+</html>
