@@ -48,9 +48,15 @@
     }
     .lede { margin: 6px 0 0; font-size: 14px; color: var(--muted); max-width: 60ch; text-wrap: pretty; }
 
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 320px;
+      gap: 24px;
+      align-items: start;
+    }
     .cards {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      grid-template-columns: 1fr;
       gap: 20px;
     }
     .card {
@@ -111,11 +117,11 @@
     .card-empty { margin: 14px 0 0; font-size: 14px; color: var(--muted); }
 
     .archive {
-      margin-top: 32px;
+      margin-top: 0;
       background: var(--paper);
       border: 1px solid var(--line);
       border-radius: var(--radius);
-      padding: 22px;
+      padding: 20px;
     }
     .archive h2 {
       margin: 0;
@@ -133,8 +139,9 @@
     .archive ul { list-style: none; margin: 0; padding: 0; }
     .archive li {
       display: flex;
+      flex-wrap: wrap;
       align-items: baseline;
-      gap: 14px;
+      gap: 2px 14px;
       padding: 7px 0;
       border-top: 1px solid var(--line);
       font-size: 14px;
@@ -155,6 +162,10 @@
       font-size: 12px;
     }
 
+    @media (max-width: 860px) {
+      .layout { grid-template-columns: 1fr; }
+      .archive { margin-top: 8px; }
+    }
     @media (max-width: 680px) {
       .wrap { padding: 24px 16px 40px; }
       .cards { gap: 16px; }
@@ -176,14 +187,16 @@
       <p class="lede">金融市场与激光产业的双线晨间观察，数据与来源随文标注。</p>
     </header>
     <main>
-      <div class="cards">
-        {{MORNING_CARD}}
-        {{LASER_CARD}}
+      <div class="layout">
+        <div class="cards">
+          {{MORNING_CARD}}
+          {{LASER_CARD}}
+        </div>
+        <section class="archive">
+          <h2>归档</h2>
+          {{ARCHIVE}}
+        </section>
       </div>
-      <section class="archive">
-        <h2>归档</h2>
-        {{ARCHIVE}}
-      </section>
       <footer>{{DISCLAIMER}}</footer>
     </main>
   </div>
