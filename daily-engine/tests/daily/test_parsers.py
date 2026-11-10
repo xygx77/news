@@ -92,6 +92,25 @@ def test_html_list_extracts_matching_links_and_date():
     assert items[0].published_at.date().isoformat() == "2026-11-05"
 
 
+def test_html_list_resolves_relative_links_against_the_list_page():
+    # 激光制造网 emits "202611/10/91645.html"; the article only exists under
+    # /news/. Joining to base_url dropped the /news/ segment and the published
+    # link 404'd.
+    html = '<ul><li><a href="202611/10/91645.html">激光焊接新工艺</a></li></ul>'
+    site = LaserSiteConfig(
+        name="激光制造网",
+        strategy="html_list",
+        base_url="https://www.laserfair.com",
+        list_url="https://www.laserfair.com/news/",
+        url_pattern=r"/\d{6}/\d{2}/\d+\.html",
+        date_from_url=True,
+    )
+    items = parse_html_list(html, site)
+    assert [i.url for i in items] == [
+        "https://www.laserfair.com/news/202611/10/91645.html"
+    ]
+
+
 def test_parse_date_from_url_rejects_unparseable():
     assert parse_date_from_url("https://example.com/about/") is None
 

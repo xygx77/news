@@ -175,7 +175,12 @@ def _summary_from_context(anchor, title: str, *, levels: int = 2) -> str:
 def parse_html_list(html: str, site: LaserSiteConfig) -> list[LaserCandidate]:
     """Parse an HTML list page using the site's link pattern."""
     soup = BeautifulSoup(html, "html.parser")
-    base = site.base_url or site.list_url or ""
+    # Resolve relative hrefs against the list page itself, like a browser does.
+    # 激光制造网's list page emits "202611/10/91645.html", which only resolves
+    # under https://www.laserfair.com/news/; joining to the site root 404s.
+    bases = [b for b in (site.list_url, site.base_url, "") if b is not None and b != ""]
+    if not bases:
+        bases = [""]
     pattern = re.compile(site.url_pattern) if site.url_pattern else None
     candidates: list[LaserCandidate] = []
     seen: set[str] = set()
@@ -184,8 +189,13 @@ def parse_html_list(html: str, site: LaserSiteConfig) -> list[LaserCandidate]:
         href = str(anchor["href"]).strip()
         if not href or href.startswith(("javascript:", "#", "mailto:", "tel:")):
             continue
-        url = _strip_fragment(urljoin(base, href))
-        if pattern is not None and not pattern.search(url):
+        url = ""
+        for base in bases:
+            candidate = _strip_fragment(urljoin(base, href))
+            if pattern is None or pattern.search(candidate):
+                url = candidate
+                break
+        if not url:
             continue
         if url in seen:
             continue

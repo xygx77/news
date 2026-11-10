@@ -10,7 +10,7 @@ from zoneinfo import ZoneInfo
 import httpx
 
 from ..config import MarketSettings
-from . import sina, tencent
+from . import repo, sina, tencent
 from .eastmoney import (
     A_SHARE,
     A_SHARE_CODES,
@@ -75,12 +75,20 @@ async def fetch_market_snapshot(
         ),
         "欧股": lambda: fetch_quotes(client, EU, group="eu", as_of=as_of),
         "日韩": lambda: fetch_quotes(client, APAC, group="apac", as_of=as_of),
+        "富时A50": lambda: sina.fetch_quotes(
+            client,
+            sina.A50_CODES,
+            group="a50",
+            as_of="抓取时点",
+            note=sina.A50_NOTE,
+        ),
         "汇率": lambda: fetch_quotes(client, FX, group="fx", as_of="抓取时点"),
         "商品": lambda: fetch_quotes(
             client, COMMODITY, group="commodity", as_of="抓取时点"
         ),
         "美债": lambda: fetch_fred_yields(client, FRED_SERIES),
         "中国国债": lambda: fetch_china_bond_yields(client),
+        "回购定盘": lambda: repo.fetch_repo_fixings(client),
         "人民币中间价": lambda: fetch_usdcny_fix(client),
     }
     if settings.sectors.enabled:

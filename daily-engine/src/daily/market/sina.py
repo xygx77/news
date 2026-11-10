@@ -1,8 +1,11 @@
-"""Sina quote fallback for FX and commodity rows.
+"""Sina quotes: FX and commodity fallbacks, plus the A50 futures line.
 
 EastMoney serves these groups; when it fails the brief loses every commodity and
 FX row at once. Tencent's international feed is empty here, but Sina's
 ``hq.sinajs.cn`` answers with the same instruments, so it backs those two groups.
+
+Sina is also the only feed for the FTSE China A50 futures used as the pre-open
+read on foreign appetite, which no other group covers.
 
 Not covered: 欧股 / 日韩 (no source among Sina, Tencent, Wind EDB) and 美元指数
 (no Sina code), which keep EastMoney as their only feed.
@@ -48,6 +51,10 @@ COMMODITY_CODES = {
 # Sina quotes copper in cents per pound while EastMoney publishes dollars per
 # pound; scale it so a fallback row keeps the same unit as the primary feed.
 COMMODITY_SCALE = {"hf_HG": 0.01}
+# FTSE China A50 futures: the pre-open read on foreign appetite for A shares.
+A50_CODES = {"hf_CHA50CFD": "富时中国A50期指"}
+A50_NOTE = "新浪 · 连续合约"
+FALLBACK_NOTE = "东方财富未返回，已用新浪财经兜底"
 
 
 def _direction(value: float) -> str:
@@ -95,6 +102,7 @@ def parse_quotes(
     group: str,
     as_of: str,
     labels: Mapping[str, str] | None = None,
+    note: str | None = None,
 ) -> list[Fact]:
     """Map a Sina quote payload into facts (requested codes only)."""
     labels = labels or {}
@@ -122,7 +130,7 @@ def parse_quotes(
                 change_unit="pct" if change is not None else None,
                 direction=_direction(change_num) if change_num is not None else "unknown",
                 status="ok",
-                note="东方财富未返回，已用新浪财经兜底",
+                note=note or FALLBACK_NOTE,
                 source_name=SOURCE_NAME,
                 source_url=SOURCE_URL,
                 as_of=as_of,
@@ -159,12 +167,13 @@ async def fetch_quotes(
     *,
     group: str,
     as_of: str,
+    note: str | None = None,
 ) -> list[Fact]:
     """Fetch one group of quotes; an empty result means "not available"."""
     if not codes:
         return []
     text = await _get_text(client, list(codes))
-    return parse_quotes(text, group=group, as_of=as_of, labels=codes)
+    return parse_quotes(text, group=group, as_of=as_of, labels=codes, note=note)
 
 
 def codes_for_group(name: str, a_share: Mapping[str, str]) -> dict[str, str]:
@@ -185,6 +194,8 @@ def as_of_for(name: str, default: str) -> str:
 
 
 __all__ = [
+    "A50_CODES",
+    "A50_NOTE",
     "COMMODITY_CODES",
     "FX_CODES",
     "as_of_for",

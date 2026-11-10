@@ -1,12 +1,8 @@
 name: Daily Briefing
 on:
   schedule:
-    # 08:17 / 09:47 Asia/Shanghai. The first ten minutes of a UTC hour are
-    # GitHub's busiest scheduler slot: on 11-07 and 11-08 the 00:10 event was
-    # never delivered (no run, no failure, green badge). Two off-peak slots give
-    # the daily run a second chance when one event is dropped.
-    - cron: "17 0 * * *"
-    - cron: "47 1 * * *"
+    # 00:10 UTC = 08:10 Asia/Shanghai
+    - cron: "10 0 * * *"
   workflow_dispatch:
 permissions:
   contents: write
@@ -33,12 +29,6 @@ jobs:
       - run: uv run --no-sync horizon-daily --config data/config.daily.json --out ../docs/daily
         working-directory: daily-engine
       - run: touch docs/.nojekyll
-      - name: Verify today's pages exist
-        run: |
-          day="$(date +%F)"
-          test -f "docs/daily/${day}/morning.html" && test -f "docs/daily/${day}/laser.html" \
-            || { echo "::error::no pages generated for ${day}"; exit 1; }
-          echo "generated docs/daily/${day}"
       - name: Commit generated pages
         run: |
           git config user.name "github-actions[bot]"

@@ -179,6 +179,51 @@ def test_render_laser_and_index(tmp_path):
     assert '<span class="day">2026-11-05</span>' in index
 
 
+def test_render_morning_shows_a50_line(tmp_path):
+    from src.daily.market.schema import Fact
+    from tests.daily.factories import fixed_morning_draft
+
+    draft = fixed_morning_draft()
+    draft.facts.append(
+        Fact(
+            id="a50:hf_CHA50CFD",
+            group="a50",
+            label="富时中国A50期指",
+            value="12914.75",
+            value_num=12914.75,
+            change="+0.07%",
+            change_num=0.07,
+            change_unit="pct",
+            direction="up",
+            status="ok",
+            note="新浪 · 连续合约",
+            source_name="新浪财经",
+            source_url="https://finance.sina.com.cn/quote/",
+            as_of="抓取时点",
+        )
+    )
+    out = tmp_path / "morning.html"
+    render_morning(
+        draft,
+        template_path=ROOT / "templates/daily/morning.html",
+        output_path=out,
+    )
+    text = out.read_text(encoding="utf-8")
+    assert "盘前风向标：富时中国A50期指 12914.75，+0.07%，新浪 · 连续合约" in text
+
+
+def test_render_morning_marks_a50_missing(tmp_path):
+    from tests.daily.factories import fixed_morning_draft
+
+    out = tmp_path / "morning.html"
+    render_morning(
+        fixed_morning_draft(),
+        template_path=ROOT / "templates/daily/morning.html",
+        output_path=out,
+    )
+    assert "盘前风向标：富时中国A50期指 暂缺" in out.read_text(encoding="utf-8")
+
+
 def test_render_laser_renders_alternate_sources(tmp_path):
     from tests.daily.factories import fixed_laser_draft
 

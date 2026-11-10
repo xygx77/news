@@ -14,6 +14,7 @@ PAYLOAD = "\n".join(
         'var hq_str_hf_HG="626.288,,626.000,626.150,629.200,618.800,05:59:48,626.000,622.650,0,3,3,2026-11-07,美铜,0";',
         'var hq_str_fx_seurusd="05:59:57,1.114300,1.114500,1.114300,104,1.121700,1.123400,1.113000,1.114300,欧元兑美元即期汇率,-0.670000,-0.007500,0.009272";',
         'var hq_str_fx_susdcnh="05:58:52,6.673600,6.674000,6.673000,120,6.690000,6.695000,6.660000,6.661000,美元兑离岸人民币,0.130000,0.008600,0.0013";',
+        'var hq_str_hf_CHA50CFD="12914.750,,12917.000,12918.000,13059.000,12892.000,13:35:29,12906.000,12907.000,1028578,8,13,2026-11-10,富时中国A50期货,264425";',
     ]
 )
 
@@ -55,14 +56,36 @@ def test_parse_skips_unrequested_codes():
     assert [fact.label for fact in facts] == ["WTI 原油", "布伦特原油"]
 
 
-def test_copper_is_scaled_to_dollars_per_pound():
-    # Sina quotes copper in cents/lb; EastMoney publishes dollars/lb.
+def test_copper_is_scaled_to_dollars_per_pound():    # Sina quotes copper in cents/lb; EastMoney publishes dollars/lb.
     facts = sina.parse_quotes(
         PAYLOAD, group="commodity", as_of="抓取时点", labels={"hf_HG": "COMEX 铜"}
     )
     fact = facts[0]
     assert fact.value == "6.26"
     assert fact.value_num == pytest.approx(6.26288, abs=1e-5)
+
+
+def test_parse_a50_futures_uses_previous_settlement():
+    facts = sina.parse_quotes(
+        PAYLOAD,
+        group="a50",
+        as_of="抓取时点",
+        labels=sina.A50_CODES,
+        note=sina.A50_NOTE,
+    )
+    assert len(facts) == 1
+    fact = facts[0]
+    assert fact.label == "富时中国A50期指"
+    assert fact.value == "12914.75"
+    assert fact.change == "+0.07%"
+    assert fact.note == "新浪 · 连续合约"
+    assert fact.id == "a50:hf_CHA50CFD"
+
+
+def test_a50_is_not_part_of_the_fx_or_commodity_fallbacks():
+    assert "hf_CHA50CFD" not in sina.COMMODITY_CODES
+    assert "hf_CHA50CFD" not in sina.FX_CODES
+    assert sina.codes_for_group("富时A50", {}) == {}
 
 
 def test_codes_cover_commodity_and_fx_but_not_indices():

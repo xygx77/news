@@ -21,6 +21,8 @@ RATE_LABELS = (
     "英镑/美元",
     "美元/日元",
     "美元兑人民币中间价",
+    "银行间回购 FR001（隔夜）",
+    "银行间回购 FR007（7 天）",
 )
 COMMODITY_LABELS = (
     "WTI 原油",
@@ -193,6 +195,23 @@ def _calendar_sources(draft: MorningDraft) -> str:
     return "、".join(parts) if parts else "暂缺"
 
 
+def _a50_line(draft: MorningDraft) -> str:
+    """One line on the A50 futures that opens the overseas section."""
+    fact = next(
+        (
+            item
+            for item in draft.facts
+            if item.group == "a50" and item.status == "ok"
+        ),
+        None,
+    )
+    if fact is None:
+        return "盘前风向标：富时中国A50期指 暂缺"
+    change = f"，{fact.change}" if fact.change else ""
+    note = f"，{fact.note}" if fact.note else ""
+    return f"盘前风向标：{fact.label} {fact.value}{change}{note}"
+
+
 def _values(draft: MorningDraft) -> Mapping[str, str]:
     ashare = _with_placeholders(
         [fact for fact in draft.facts if fact.group == "ashare"],
@@ -254,6 +273,7 @@ def _values(draft: MorningDraft) -> Mapping[str, str]:
         "US_MARKET": _escape(draft.us_market),
         "EU_MARKET": _escape(draft.eu_market),
         "APAC_MARKET": _escape(draft.apac_market),
+        "A50_LINE": _escape(_a50_line(draft)),
         "SECTOR_BOXES": _sector_boxes(draft),
         "POLICY_CONTENT": _policy_content(draft),
         "CALENDAR_ROWS": _calendar_rows(draft),
