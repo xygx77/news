@@ -179,6 +179,44 @@ def test_render_laser_and_index(tmp_path):
     assert '<span class="day">2026-11-05</span>' in index
 
 
+def test_index_archive_keeps_fifteen_days_and_folds_the_rest(tmp_path):
+    from src.daily.render.index import render_index
+
+    for day in range(1, 21):
+        (tmp_path / f"2026-09-{day:02d}").mkdir()
+    render_index(
+        output_dir=tmp_path,
+        report_day=date(2026, 9, 20),
+        morning=None,
+        laser=None,
+        template_path=ROOT / "templates/daily/index.html",
+    )
+    text = (tmp_path / "index.html").read_text(encoding="utf-8")
+    visible, _, folded = text.partition('<details class="archive-more">')
+    assert visible.count('<span class="day">') == 15
+    assert folded.count('<span class="day">') == 5
+    assert "更多存档（还有 5 天）" in folded
+    # The collapsed block is one toggle, not a second always-visible list.
+    assert folded.count("<details") == 1 and "</details>" in folded
+
+
+def test_index_archive_withholds_the_toggle_when_nothing_is_hidden(tmp_path):
+    from src.daily.render.index import render_index
+
+    for day in range(1, 4):
+        (tmp_path / f"2026-09-{day:02d}").mkdir()
+    render_index(
+        output_dir=tmp_path,
+        report_day=date(2026, 9, 3),
+        morning=None,
+        laser=None,
+        template_path=ROOT / "templates/daily/index.html",
+    )
+    text = (tmp_path / "index.html").read_text(encoding="utf-8")
+    assert '<details class="archive-more">' not in text
+    assert text.count('<span class="day">') == 3
+
+
 def test_render_morning_shows_a50_line(tmp_path):
     from src.daily.market.schema import Fact
     from tests.daily.factories import fixed_morning_draft

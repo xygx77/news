@@ -154,6 +154,33 @@
     .archive a:focus-visible { outline: 2px solid var(--accent-2); outline-offset: 2px; }
     .archive .small { margin: 10px 0 0; font-size: 13px; color: var(--muted); }
 
+    .archive-more { margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--line); }
+    .archive-more > summary {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 0;
+      font-size: 13px;
+      color: var(--accent-2);
+      cursor: pointer;
+      list-style: none;
+      border-radius: 4px;
+    }
+    .archive-more > summary::-webkit-details-marker { display: none; }
+    .archive-more > summary::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      flex: none;
+      border-right: 1.5px solid currentColor;
+      border-bottom: 1.5px solid currentColor;
+      transform: translateY(-1px) rotate(-45deg);
+      transition: transform .18s var(--ease);
+    }
+    .archive-more[open] > summary::before { transform: translateY(1px) rotate(45deg); }
+    .archive-more > summary:hover { color: var(--accent); }
+    .archive-more > summary:focus-visible { outline: 2px solid var(--accent-2); outline-offset: 2px; }
+
     footer {
       margin-top: 28px;
       padding-top: 14px;
@@ -189,7 +216,7 @@
     <main>
       <div class="layout">
         <div class="cards">
-          <a class="card" href="2026-11-10/morning.html"><div class="card-head"><h2>金融市场晨报</h2><span class="more">查看全文 <span class="arrow">→</span></span></div><p class="digest-label">今日导读</p><ul class="digest"><li>A 股收盘：上证指数 3663.72（+0.08%），深证成指 11241.54（+0.86%），创业板指 2494.40（+1.46%），科创50 1265.02（+0.64%），沪深300 4059.11（+0.07%）。全市场上涨 4139 家、下跌 1106 家、平盘 135 家。</li><li>美股三大指数收涨，道琼斯 52389.75（+2.15%），标普500 7549.94（+2.35%），纳斯达克 25253.14（+2.74%）。</li><li>商品与汇率：WTI 原油 85.71（-1.31%），布伦特原油 91.09（-1.60%），COMEX 黄金 4079.80（-0.84%），COMEX 白银 52.33（-0.70%），美元指数 101.71（+0.05%）。</li><li>加息大消息！美联储理事沃勒：将支持下月加息25个基点 必要时50个基点</li></ul></a>
+          <a class="card" href="2026-11-10/morning.html"><div class="card-head"><h2>金融市场晨报</h2><span class="more">查看全文 <span class="arrow">→</span></span></div><p class="digest-label">今日导读</p><ul class="digest"><li>A 股收盘：上证指数 3663.72（+0.08%），深证成指 11241.54（+0.86%），创业板指 2494.40（+1.46%），科创50 1265.02（+0.64%），沪深300 4059.11（+0.07%）。全市场上涨 4139 家、下跌 1106 家、平盘 135 家。</li><li>美股三大指数收涨，道琼斯 52389.75（+2.15%），标普500 7549.94（+2.35%），纳斯达克 25253.14（+2.74%）。</li><li>商品与汇率：WTI 原油 85.81（-1.20%），布伦特原油 91.15（-1.53%），COMEX 黄金 4083.80（-0.75%），COMEX 白银 52.45（-0.47%），美元指数 101.73（+0.07%）。</li><li>加息大消息！美联储理事沃勒：将支持下月加息25个基点 必要时50个基点</li></ul></a>
           <a class="card" href="2026-11-10/laser.html"><div class="card-head"><h2>激光产业简报</h2><span class="more">查看全文 <span class="arrow">→</span></span></div><p class="digest-label">今日导读</p><ul class="digest"><li>前三季度营收超78亿！激光巨头净利激增214% - OFwe…（OFweek激光）</li><li>创新突破｜光纤可插拔式1470nm光源：重塑精准激光除草新范…（OFweek激光）</li><li>AI-driven sales boom continues at Coherent | optics.org（Optics.org）</li><li>光智科技子公司与Coherent 签订长期供货意向协议（激光制造网）</li><li>锐科激光泰国客户中心正式开业！“1+4+N”全球化布局再添东…（激光制造网）</li></ul></a>
         </div>
         <section class="archive">

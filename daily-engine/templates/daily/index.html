@@ -154,6 +154,33 @@
     .archive a:focus-visible { outline: 2px solid var(--accent-2); outline-offset: 2px; }
     .archive .small { margin: 10px 0 0; font-size: 13px; color: var(--muted); }
 
+    .archive-more { margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--line); }
+    .archive-more > summary {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 0;
+      font-size: 13px;
+      color: var(--accent-2);
+      cursor: pointer;
+      list-style: none;
+      border-radius: 4px;
+    }
+    .archive-more > summary::-webkit-details-marker { display: none; }
+    .archive-more > summary::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      flex: none;
+      border-right: 1.5px solid currentColor;
+      border-bottom: 1.5px solid currentColor;
+      transform: translateY(-1px) rotate(-45deg);
+      transition: transform .18s var(--ease);
+    }
+    .archive-more[open] > summary::before { transform: translateY(1px) rotate(45deg); }
+    .archive-more > summary:hover { color: var(--accent); }
+    .archive-more > summary:focus-visible { outline: 2px solid var(--accent-2); outline-offset: 2px; }
+
     footer {
       margin-top: 28px;
       padding-top: 14px;

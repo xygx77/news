@@ -13,6 +13,9 @@ from .template import fill_placeholders, render_conditional_blocks
 
 _DATE_DIR = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 _TAG = re.compile(r"<[^>]+>")
+# Only the most recent days stay open in the archive column; the rest live
+# behind a "更多存档" toggle so the index stays one screen tall.
+ARCHIVE_VISIBLE_DAYS = 15
 
 
 def _escape(value: object) -> str:
@@ -81,16 +84,18 @@ def _laser_card(report_day: date, laser: LaserDraft | None) -> str:
     )
 
 
-def _archive(output_dir: Path) -> str:
-    archives = list_archives(output_dir)
-    if not archives:
-        return '<p class="small">暂无历史归档。</p>'
+def _render_archive_groups(days: list[date], *, continued_month: str | None = None) -> str:
     groups: dict[str, list[date]] = {}
-    for day in archives:
+    for day in days:
         groups.setdefault(day.strftime("%Y-%m"), []).append(day)
     parts: list[str] = []
+    first = True
     for month in sorted(groups, reverse=True):
         year, month_number = month.split("-")
+        # The visible list and the collapsed one can split a month in two; mark
+        # the second half so the repeated heading does not look like a bug.
+        suffix = "（续）" if first and month == continued_month else ""
+        first = False
         entries = "".join(
             f'<li><span class="day">{day.isoformat()}</span>'
             f'<span class="links">'
@@ -98,8 +103,27 @@ def _archive(output_dir: Path) -> str:
             f'<a href="{day.isoformat()}/laser.html">激光简报</a></span></li>'
             for day in groups[month]
         )
-        parts.append(f"<h3>{year}年{int(month_number)}月</h3><ul>{entries}</ul>")
+        parts.append(f"<h3>{year}年{int(month_number)}月{suffix}</h3><ul>{entries}</ul>")
     return "".join(parts)
+
+
+def _archive(
+    output_dir: Path, *, visible_days: int = ARCHIVE_VISIBLE_DAYS
+) -> str:
+    archives = list_archives(output_dir)
+    if not archives:
+        return '<p class="small">暂无历史归档。</p>'
+    head, rest = archives[:visible_days], archives[visible_days:]
+    html = _render_archive_groups(head)
+    if rest:
+        month_boundary = head[-1].strftime("%Y-%m") if head else None
+        html += (
+            '<details class="archive-more">'
+            f"<summary>更多存档（还有 {len(rest)} 天）</summary>"
+            f"{_render_archive_groups(rest, continued_month=month_boundary)}"
+            "</details>"
+        )
+    return html
 
 
 def render_index(
