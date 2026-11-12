@@ -1,0 +1,556 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>激光行业简报 | 2026年11月12日</title>
+  <style>
+    :root {
+      --ink: #26282b;
+      --muted: #5f6b76;
+      --paper: #fff;
+      --bg: #eef0f2;
+      --accent: #1a3a5c;
+      --accent-2: #2e5d8c;
+      --accent-3: #8b5e34;
+      --table-head: var(--accent);
+      --rule: #b7c9d8;
+      --line: #dfe3e8;
+      --soft: #f3f6f8;
+      --callout-bg: #f0f4f8;
+      --blue: var(--accent);
+      --page-w: 210mm;
+      --page-h: 297mm;
+      --page-pad-top: 20mm;
+      --page-pad-x: 22mm;
+      --page-pad-bottom: 18mm;
+      --content-w: calc(var(--page-w) - var(--page-pad-x) * 2);
+      --content-h: calc(var(--page-h) - var(--page-pad-top) - var(--page-pad-bottom));
+      --column-gap: 36px;
+    }
+
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "Noto Serif SC", "Source Han Serif SC", "Songti SC", "SimSun", Georgia, serif;
+      font-size: 10.5pt;
+      line-height: 1.72;
+    }
+    body { padding: 14px 0 18px; overflow-x: hidden; }
+    #source {
+      position: fixed;
+      left: -99999px;
+      top: 0;
+      width: var(--content-w);
+      visibility: hidden;
+      pointer-events: none;
+    }
+    #pages {
+      counter-reset: source-item;
+      display: grid;
+      grid-template-columns: repeat(var(--page-columns, 1), max-content);
+      justify-content: center;
+      align-items: start;
+      gap: 14px 18px;
+      padding: 0 12px;
+    }
+    .viewer-tools {
+      position: fixed;
+      top: 10px;
+      left: 50%;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      width: max-content;
+      margin: 0;
+      padding: 3px;
+      background: rgba(255, 255, 255, .9);
+      border: 1px solid #d7dce5;
+      border-radius: 5px;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, .1);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateX(-50%) translateY(-8px);
+      transition: opacity .16s ease, transform .16s ease;
+    }
+    .viewer-tools.is-visible {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateX(-50%) translateY(0);
+    }
+    .viewer-tools button {
+      width: 22px;
+      height: 22px;
+      padding: 0;
+      border: 1px solid #c6cfdd;
+      border-radius: 4px;
+      background: #fff;
+      color: var(--accent);
+      font-size: 14px;
+      line-height: 1;
+      cursor: pointer;
+    }
+    .viewer-tools button:hover { background: var(--soft); }
+    .viewer-tools output {
+      min-width: 38px;
+      color: #303846;
+      font-size: 11px;
+      text-align: center;
+      font-variant-numeric: tabular-nums;
+    }
+    .page-frame { width: var(--page-w); height: var(--page-h); margin: 0; }
+    .page {
+      width: var(--page-w);
+      height: var(--page-h);
+      margin: 0;
+      padding: var(--page-pad-top) var(--page-pad-x) var(--page-pad-bottom);
+      background: var(--paper);
+      border: 1px solid #dedede;
+      box-shadow: 0 1px 1px rgba(0,0,0,.05), 0 10px 34px rgba(0,0,0,.14);
+      position: relative;
+      overflow: hidden;
+      transform: scale(var(--page-scale, 1));
+      transform-origin: top left;
+    }
+    .page-content {
+      width: var(--content-w);
+      height: var(--content-h);
+      overflow: hidden;
+    }
+    .folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 9mm;
+      color: #888;
+      font-size: 9pt;
+      text-align: center;
+    }
+    .doc-flow {
+      width: var(--content-w);
+      background: var(--paper);
+      counter-reset: source-item;
+    }
+    .column-flow {
+      height: var(--content-h);
+      column-width: var(--content-w);
+      column-gap: var(--column-gap);
+      column-fill: auto;
+    }
+    .measure-flow {
+      position: fixed;
+      left: -99999px;
+      top: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+    .page-slice {
+      transform: translateX(calc(var(--slice-index) * -1 * (var(--content-w) + var(--column-gap))));
+      transform-origin: top left;
+    }
+    h1, h2, h3 {
+      color: var(--blue);
+      line-height: 1.28;
+      margin: 0;
+      font-weight: 700;
+      letter-spacing: 0;
+    }
+    h1 { font-size: 22pt; margin: 1mm 0 2.5mm; }
+    h2 { font-size: 15pt; padding-bottom: 3pt; border-bottom: 1px solid var(--rule); margin: 7mm 0 4mm; }
+    h3 { font-size: 12pt; margin: 5mm 0 2.5mm; }
+    .doc-flow > .flow-block:first-child h2,
+    .doc-flow > .flow-block:first-child h3 { margin-top: 0; }
+    p { margin: 0 0 3.5mm; text-align: justify; text-justify: inter-ideograph; }
+    ul, ol { margin: 2mm 0 4mm 0; padding-left: 16pt; }
+    li { margin: 0 0 2mm; }
+    table { width: 100%; border-collapse: collapse; margin: 3mm 0 4mm; font-size: 9.2pt; line-height: 1.5; break-inside: auto; page-break-inside: auto; }
+    thead { display: table-header-group; }
+    tfoot { display: table-footer-group; }
+    tr { break-inside: avoid; page-break-inside: avoid; }
+    th { background: var(--table-head); color: #fff; text-align: left; font-weight: 700; padding: 2.8mm 2.4mm; }
+    td { padding: 2.4mm 2.4mm; vertical-align: top; border-bottom: 1px solid #e7e7e7; }
+    tbody tr:nth-child(even) td { background: var(--soft); }
+    tbody tr:last-child td { border-bottom: 1.4px solid #303030; }
+    caption {
+      caption-side: bottom;
+      color: var(--muted);
+      font-size: 8.6pt;
+      padding-top: 1.5mm;
+      text-align: left;
+    }
+    .title-block { border-top: 2.5px solid var(--accent); padding-top: 4mm; margin-bottom: 2mm; }
+    .report-kicker { color: var(--accent-2); font-size: 8.8pt; font-weight: 700; margin-bottom: 1mm; letter-spacing: 0.5pt; }
+    .subtitle { color: var(--blue); font-size: 13pt; font-weight: 700; line-height: 1.38; margin: 0 0 2.5mm; max-width: 145mm; }
+    .meta {
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+      color: #444;
+      display: grid;
+      font-size: 9pt;
+      gap: 2mm;
+      grid-template-columns: 1fr 1fr 1fr;
+      margin: 0 0 3mm;
+      padding: 2mm 0;
+      text-align: left;
+    }
+    .lead { font-size: 10.8pt; line-height: 1.72; margin-bottom: 4mm; }
+    .callout { border-left: 3px solid var(--blue); background: var(--callout-bg); padding: 3.5mm 4.5mm; margin: 4mm 0; }
+    .callout-title { font-weight: 700; color: var(--accent); margin-bottom: 1.5mm; font-size: 10.5pt; }
+    .callout.warn { border-left-color: #c9a44d; background: #fdf8ec; }
+    .small { font-size: 9pt; color: var(--muted); }
+    .source-item { counter-increment: source-item; color: #444; font-size: 8.6pt; line-height: 1.5; margin: 0 0 3mm; padding-left: 16pt; position: relative; }
+    .source-item::before { content: counter(source-item) "."; position: absolute; left: 0; top: 0; }
+    a { color: var(--blue); text-decoration: none; }
+    .tag { display: inline-block; padding: 0.8mm 2mm; border-radius: 2px; font-size: 8.5pt; font-weight: 700; margin-right: 2mm; }
+    .tag-up { background: #e8f5e9; color: #2e7d32; }
+    .tag-down { background: #ffebee; color: #c62828; }
+    .tag-flat { background: #f5f5f5; color: #616161; }
+    .highlight-box { background: var(--soft); padding: 3mm 4mm; margin: 3mm 0; border-radius: 2px; }
+    .doc-topbar { display: none; }
+
+    @page { size: A4; margin: var(--page-pad-top) var(--page-pad-x) var(--page-pad-bottom); }
+    @media print {
+      html, body { padding: 0; background: white; }
+      .viewer-tools { display: none; }
+      #pages { display: none !important; }
+      #source {
+        position: static;
+        visibility: visible;
+        pointer-events: auto;
+        width: auto;
+      }
+    }
+    .laser-item { margin: 0 0 5mm; }
+    .laser-item h3 { font-size: 11pt; color: var(--accent); margin: 0 0 1.5mm; line-height: 1.5; }
+    .laser-item h3 a { color: inherit; text-decoration: none; }
+    .laser-item h3 a:hover { text-decoration: underline; }
+    .laser-item p { margin: 0 0 1.2mm; }
+    /* ===== mobile-read: begin =====
+       Phones get a flowing article instead of the scaled A4 canvas: at 390px
+       wide the canvas is pinned to scale .58 (=> ~8px body text) and cropped
+       ~35px on both edges. Print and desktop keep the A4 paged view.
+       Keep this block byte-identical in morning.html and laser.html. */
+    @media screen and (max-width: 820px) {
+      html, body {
+        font-size: 16px;
+        line-height: 1.75;
+        -webkit-text-size-adjust: 100%;
+      }
+      body { padding: 0 0 32px; }
+
+      #pages, .viewer-tools, .folio { display: none; }
+
+      .doc-topbar {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 12px;
+        max-width: 760px;
+        margin: 12px auto 0;
+        padding: 0 19px;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+        font-size: 13px;
+        font-weight: 500;
+        line-height: 1.5;
+        color: var(--muted);
+        font-variant-numeric: tabular-nums;
+      }
+      .doc-topbar a { color: var(--accent-2); text-decoration: none; }
+      .doc-topbar a:hover,
+      .doc-topbar a:focus-visible {
+        text-decoration: underline;
+        text-underline-offset: 3px;
+      }
+
+      #source {
+        position: static;
+        left: auto;
+        top: auto;
+        width: auto;
+        max-width: 760px;
+        visibility: visible;
+        pointer-events: auto;
+        margin: 10px auto 0;
+        padding: 20px 18px 26px;
+        background: var(--paper);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        overflow-wrap: anywhere;
+      }
+
+      h1 { font-size: 25px; margin: 2px 0 8px; }
+      h2 { font-size: 19px; margin: 26px 0 12px; padding-bottom: 6px; }
+      h3 { font-size: 16.5px; margin: 20px 0 8px; }
+      p { margin: 0 0 14px; }
+      ul, ol { margin: 8px 0 14px; padding-left: 20px; }
+      li { margin: 0 0 8px; }
+
+      .title-block { padding-top: 12px; margin-bottom: 8px; }
+      .report-kicker { font-size: 12px; margin-bottom: 4px; }
+      .subtitle { font-size: 17px; margin: 0 0 10px; max-width: none; }
+      .meta {
+        grid-template-columns: 1fr;
+        gap: 4px;
+        font-size: 13px;
+        padding: 8px 0;
+        margin: 0 0 14px;
+      }
+      .lead { font-size: 16px; }
+      .small { font-size: 13px; }
+      .callout { padding: 14px 16px; margin: 16px 0; }
+      .callout-title { font-size: 15px; margin-bottom: 6px; }
+      .highlight-box { padding: 12px 14px; margin: 12px 0; }
+      .source-item { font-size: 13px; }
+      .tag { font-size: 12px; }
+      .laser-item { margin-bottom: 20px; }
+      .laser-item h3 { font-size: 16.5px; line-height: 1.5; }
+
+      table {
+        font-size: 14px;
+        line-height: 1.6;
+        margin: 10px 0 14px;
+      }
+      th, td { padding: 8px 6px; overflow-wrap: anywhere; }
+      th { font-size: 13px; white-space: nowrap; }
+      table .tag { white-space: nowrap; }
+      caption { font-size: 12.5px; padding-top: 6px; }
+    }
+    /* ===== mobile-read: end ===== */
+  </style>
+</head>
+<body>
+  <nav class="viewer-tools" aria-label="预览缩放">
+    <button type="button" data-zoom="out" title="缩小" aria-label="缩小">−</button>
+    <output id="zoom-value" aria-live="polite">100%</output>
+    <button type="button" data-zoom="in" title="放大" aria-label="放大">+</button>
+    <button type="button" data-zoom="reset" title="适合宽度" aria-label="适合宽度">↺</button>
+  </nav>
+
+  <nav class="doc-topbar" aria-label="返回首页">
+    <a href="../index.html">← 每日简报</a>
+  </nav>
+
+  <main id="source" class="doc-flow">
+    <section class="flow-block title-block">
+      <p class="report-kicker">全球激光产业</p>
+      <h1>激光行业简报</h1>
+      <p class="subtitle">2026年11月12日 | 星期四</p>
+      <div class="meta">
+        <span>时间窗口：近 48 小时</span>
+        <span>市场：全球</span>
+        <span>信息来源：公开资料整理</span>
+      </div>
+    </section>
+
+    
+
+    <section class="flow-block">
+      <div class="callout">
+        <div class="callout-title">编制说明</div>
+        <p style="margin:0;">本期覆盖近 48 小时公开信息，按关键词权重排序，最多 8 条。</p>
+      </div>
+    </section>
+
+    <section class="flow-block">
+      <h2>本期要点</h2>
+      <div class="callout">
+        <div class="callout-title">今日导读</div>
+        <ul>
+          <li>200万美元设立香港子公司！光库科技控股子公司加速国际化布局（激光制造网）</li><li>上海电气助力国家重大科技基础设施SHINE实现自由电子激光首…（激光制造网）</li><li>前三季度营收超78亿！激光巨头净利激增214% - OFwe…（OFweek激光）</li><li>创新突破｜光纤可插拔式1470nm光源：重塑精准激光除草新范…（OFweek激光）</li><li>AI-driven sales boom continues at Coherent | optics.org（Optics.org）</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="flow-block">
+      <h2>一、要闻速览</h2>
+      <article class="laser-item"><h3><span class="tag">1. 产品发布</span><a href="https://www.laserfair.com/news/202611/11/91653.html">200万美元设立香港子公司！光库科技控股子公司加速国际化布局</a></h3><p>11月10日，珠海光库科技发布公告，公司第四届董事会第三十次会议正式审议通过对外投资议案：控股子公司上海拜安实业有限公司拟出资 200万美元…</p><p class="small">来源：<a href="https://www.laserfair.com/news/202611/11/91653.html">激光制造网</a> · 2026-11-11 00:00</p></article>
+<article class="laser-item"><h3><span class="tag">2. 技术突破</span><a href="https://www.laserfair.com/news/202611/11/91649.html">上海电气助力国家重大科技基础设施SHINE实现自由电子激光首…</a></h3><p>近日，国家重大科技基础设施——硬X射线自由电子激光装置（SHINE）建设迎来关键节点：装置成功实现自由电子激光首次出光，为 2027年底建成…</p><p class="small">来源：<a href="https://www.laserfair.com/news/202611/11/91649.html">激光制造网</a> · 2026-11-11 00:00</p></article>
+<article class="laser-item"><h3><span class="tag">3. 业绩</span><a href="https://laser.ofweek.com/2026-10/ART-8500-2400-30708207.html">前三季度营收超78亿！激光巨头净利激增214% - OFwe…</a></h3><p>前三季度营收超78亿！激光巨头净利激增214% 10月20日晚间，大族数控2026年三季报出炉。</p><p class="small">来源：<a href="https://laser.ofweek.com/2026-10/ART-8500-2400-30708207.html">OFweek激光</a> · 时间暂缺</p></article>
+<article class="laser-item"><h3><span class="tag">4. 技术突破</span><a href="https://laser.ofweek.com/2026-06/ART-8200-2400-30689724.html">创新突破｜光纤可插拔式1470nm光源：重塑精准激光除草新范…</a></h3><p>创新突破｜光纤可插拔式1470nm光源：重塑精准激光除草新范式 度亘核芯全新推出自主研发1470nm可插拔式半导体激光模块，产品创新性融合红…</p><p class="small">来源：<a href="https://laser.ofweek.com/2026-06/ART-8200-2400-30689724.html">OFweek激光</a> · 时间暂缺</p></article>
+<article class="laser-item"><h3><span class="tag">5. 业绩</span><a href="https://optics.org/news/ai-driven-sales-boom-continues-at-coherent">AI-driven sales boom continues at Coherent | optics.org</a></h3><p>AI-driven sales boom continues at Coherent Annual revenues expected to…</p><p class="small">来源：<a href="https://optics.org/news/ai-driven-sales-boom-continues-at-coherent">Optics.org</a> · 时间暂缺</p></article>
+<article class="laser-item"><h3><span class="tag">6. 产品发布</span><a href="https://www.laserfocusworld.com.cn/DeNP.asp?id=11848">Santec 高性能可调谐激光器 TSL-580 正式发布…</a></h3><p>| Santec 全新推出第八代高性能可调谐激光器 TSL-580，产品具备宽波长调谐范围、稳定输出功率与良好信噪比表现。</p><p class="small">来源：<a href="https://www.laserfocusworld.com.cn/DeNP.asp?id=11848">激光世界中文版</a> · 时间暂缺</p></article>
+<article class="laser-item"><h3><span class="tag">7. 其他</span><a href="https://www.laserfocusworld.com.cn/DeIN.asp?id=11854">MKS庆祝马来西亚超级中心工厂开业，进一步增强半导体制造能力…</a></h3><p>| 美国马萨诸塞州安多弗和马来西亚吉隆坡，2026年6月22日 — MKS公司（纳斯达克股票代码：MKSI）作为一家致力于通过赋能科技改变世…</p><p class="small">来源：<a href="https://www.laserfocusworld.com.cn/DeIN.asp?id=11854">激光世界中文版</a> · 时间暂缺</p></article>
+<article class="laser-item"><h3><span class="tag">8. 其他</span><a href="https://optics.org/news/chip-industry-momentum-boosts-jenoptik-order-book">Chip industry momentum boosts Jenoptik order book | optics.org</a></h3><p>Chip industry momentum boosts Jenoptik order book German photonics fir…</p><p class="small">来源：<a href="https://optics.org/news/chip-industry-momentum-boosts-jenoptik-order-book">Optics.org</a> · 时间暂缺</p></article>
+    </section>
+
+    
+
+    <p class="small" style="margin-top:6mm;">本简报由规则自动生成，趋势点评待接入 AI。数据窗口：近 48 小时。数据截至 2026-11-12 08:36（北京时间）。未获取项：无。</p>
+  </main>
+
+  <div id="pages" aria-label="分页文档"></div>
+
+  <script>
+    (() => {
+      const BASE_WIDTH = 794;
+      const BASE_HEIGHT = 1123;
+      const SIDE_GAP = 28;
+      const MIN_SCALE = 0.58;
+      const MAX_SCALE = 1.28;
+      const TWO_COLUMN_SCALE = 0.74;
+      // Must match the "mobile-read" media query in the stylesheet above.
+      const MOBILE_MAX_WIDTH = 820;
+      const mobileQuery = window.matchMedia(`(max-width: ${MOBILE_MAX_WIDTH}px)`);
+      const source = document.getElementById("source");
+      const pages = document.getElementById("pages");
+      const viewerTools = document.querySelector(".viewer-tools");
+      const zoomValue = document.getElementById("zoom-value");
+      let userScale = null;
+      let zoomToolsTimer = 0;
+
+      function createPage(index) {
+        const frame = document.createElement("div");
+        frame.className = "page-frame";
+        const page = document.createElement("article");
+        page.className = "page";
+        const content = document.createElement("div");
+        content.className = "page-content";
+        const slice = document.createElement("div");
+        slice.className = "doc-flow column-flow page-slice";
+        slice.style.setProperty("--slice-index", index);
+        slice.innerHTML = source.innerHTML;
+        const folio = document.createElement("div");
+        folio.className = "folio";
+        folio.textContent = String(index + 1);
+        content.appendChild(slice);
+        page.append(content, folio);
+        frame.appendChild(page);
+        pages.appendChild(frame);
+      }
+
+      function createMeasure() {
+        const measure = document.createElement("div");
+        measure.className = "doc-flow column-flow measure-flow";
+        measure.innerHTML = source.innerHTML;
+        document.body.appendChild(measure);
+        return measure;
+      }
+
+      function pageCountFor(measure) {
+        const contentHeight = document.querySelector(".page-content")?.clientHeight || measure.clientHeight;
+        const sourceHeight = source.scrollHeight;
+        return Math.max(1, Math.ceil(sourceHeight / contentHeight));
+      }
+
+      function paginate() {
+        pages.innerHTML = "";
+        const measure = createMeasure();
+        const count = pageCountFor(measure);
+        measure.remove();
+        for (let index = 0; index < count; index += 1) createPage(index);
+      }
+
+      function clamp(value, min, max) {
+        return Math.min(max, Math.max(min, value));
+      }
+
+      function fitScale() {
+        return Math.min(1, Math.max(MIN_SCALE, (window.innerWidth - SIDE_GAP) / BASE_WIDTH));
+      }
+
+      function pageColumns(scale) {
+        const twoColumnWidth = BASE_WIDTH * scale * 2 + 18 + SIDE_GAP;
+        return scale <= TWO_COLUMN_SCALE && pages.children.length > 1 && window.innerWidth >= twoColumnWidth ? 2 : 1;
+      }
+
+      function applyScale(scale) {
+        document.documentElement.style.setProperty("--page-scale", scale.toFixed(4));
+        document.documentElement.style.setProperty("--page-columns", pageColumns(scale));
+        document.querySelectorAll(".page-frame").forEach((frame) => {
+          frame.style.width = `${BASE_WIDTH * scale}px`;
+          frame.style.height = `${BASE_HEIGHT * scale}px`;
+        });
+        zoomValue.textContent = `${Math.round(scale * 100)}%`;
+      }
+
+      function fitPages() {
+        applyScale(userScale ?? fitScale());
+      }
+
+      function showZoomTools() {
+        viewerTools.classList.add("is-visible");
+        clearTimeout(zoomToolsTimer);
+        zoomToolsTimer = setTimeout(() => {
+          viewerTools.classList.remove("is-visible");
+        }, 1050);
+      }
+
+      function zoomBy(delta) {
+        if (mobileQuery.matches) return;
+        const current = userScale ?? fitScale();
+        userScale = clamp(current + delta, MIN_SCALE, MAX_SCALE);
+        applyScale(userScale);
+        showZoomTools();
+      }
+
+      function resetZoom() {
+        userScale = null;
+        fitPages();
+        showZoomTools();
+      }
+
+      function syncLayout() {
+        if (mobileQuery.matches) {
+          pages.innerHTML = "";
+          viewerTools.classList.remove("is-visible");
+          return;
+        }
+        paginate();
+        fitPages();
+      }
+
+      syncLayout();
+      if (mobileQuery.addEventListener) {
+        mobileQuery.addEventListener("change", syncLayout);
+      } else if (mobileQuery.addListener) {
+        mobileQuery.addListener(syncLayout);
+      }
+      window.addEventListener("resize", () => {
+        if (!mobileQuery.matches) fitPages();
+      });
+      window.addEventListener("wheel", (event) => {
+        if (!event.ctrlKey && !event.metaKey) return;
+        if (mobileQuery.matches) return;
+        event.preventDefault();
+        zoomBy(event.deltaY > 0 ? -0.04 : 0.04);
+      }, { passive: false });
+      window.addEventListener("keydown", (event) => {
+        if (!event.ctrlKey && !event.metaKey) return;
+        if (event.key === "+" || event.key === "=") {
+          event.preventDefault();
+          zoomBy(0.08);
+        }
+        if (event.key === "-" || event.key === "_") {
+          event.preventDefault();
+          zoomBy(-0.08);
+        }
+        if (event.key === "0") {
+          event.preventDefault();
+          resetZoom();
+        }
+      });
+      viewerTools.addEventListener("click", (event) => {
+        const action = event.target?.dataset?.zoom;
+        if (action === "in") zoomBy(0.08);
+        if (action === "out") zoomBy(-0.08);
+        if (action === "reset") resetZoom();
+        event.target?.blur?.();
+      });
+      window.addEventListener("beforeprint", () => {
+        document.documentElement.style.setProperty("--page-scale", "1");
+        document.documentElement.style.setProperty("--page-columns", "1");
+        document.querySelectorAll(".page-frame").forEach((frame) => {
+          frame.style.width = "";
+          frame.style.height = "";
+        });
+      });
+      window.addEventListener("afterprint", fitPages);
+    })();
+  </script>
+</body>
+</html>
