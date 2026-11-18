@@ -22,8 +22,8 @@
     "consecutive_failures": 0
   },
   "Industrysourcing激光频道": {
-    "last_ok": "2026-11-10",
-    "consecutive_failures": 8,
+    "last_ok": "2026-11-18",
+    "consecutive_failures": 0,
     "last_failure": "2026-11-18"
   },
   "European Optical Society": {
@@ -45,7 +45,8 @@
   },
   "Coherent": {
     "last_ok": "2026-11-18",
-    "consecutive_failures": 0
+    "consecutive_failures": 1,
+    "last_failure": "2026-11-18"
   },
   "IPG Photonics": {
     "last_ok": "2026-11-18",
