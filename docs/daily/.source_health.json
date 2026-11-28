@@ -1,75 +1,75 @@
 {
   "jin10": {
-    "last_ok": "2026-11-27",
+    "last_ok": "2026-11-28",
     "consecutive_failures": 0
   },
   "wallstreetcn": {
     "last_ok": "2026-11-23",
-    "consecutive_failures": 4,
-    "last_failure": "2026-11-27"
+    "consecutive_failures": 5,
+    "last_failure": "2026-11-28"
   },
   "rss": {
-    "last_ok": "2026-11-27",
+    "last_ok": "2026-11-28",
     "consecutive_failures": 0
   },
   "激光制造网": {
-    "last_ok": "2026-11-26",
-    "consecutive_failures": 1,
+    "last_ok": "2026-11-28",
+    "consecutive_failures": 0,
     "last_failure": "2026-11-27"
   },
   "OFweek激光": {
-    "last_ok": "2026-11-27",
+    "last_ok": "2026-11-28",
     "consecutive_failures": 0
   },
   "Industrysourcing激光频道": {
     "last_ok": "2026-11-18",
-    "consecutive_failures": 9,
-    "last_failure": "2026-11-27"
+    "consecutive_failures": 10,
+    "last_failure": "2026-11-28"
   },
   "European Optical Society": {
-    "last_ok": "2026-11-27",
+    "last_ok": "2026-11-28",
     "consecutive_failures": 0
   },
   "激光世界中文版": {
-    "last_ok": "2026-11-27",
+    "last_ok": "2026-11-28",
     "consecutive_failures": 0
   },
   "中国光学光电子行业协会": {
-    "last_ok": "2026-11-27",
+    "last_ok": "2026-11-28",
     "consecutive_failures": 0,
     "last_failure": "2026-11-11"
   },
   "Optics.org": {
-    "last_ok": "2026-11-27",
+    "last_ok": "2026-11-28",
     "consecutive_failures": 0
   },
   "Coherent": {
     "last_ok": "2026-11-18",
-    "consecutive_failures": 10,
-    "last_failure": "2026-11-27"
+    "consecutive_failures": 11,
+    "last_failure": "2026-11-28"
   },
   "IPG Photonics": {
-    "last_ok": "2026-11-27",
+    "last_ok": "2026-11-28",
     "consecutive_failures": 0
   },
   "Jenoptik": {
-    "last_ok": "2026-11-27",
+    "last_ok": "2026-11-28",
     "consecutive_failures": 0
   },
   "nLIGHT": {
-    "last_ok": "2026-11-27",
+    "last_ok": "2026-11-28",
     "consecutive_failures": 0
   },
   "大族激光": {
-    "last_ok": "2026-11-27",
+    "last_ok": "2026-11-28",
     "consecutive_failures": 0
   },
   "Lumentum": {
-    "last_ok": "2026-11-27",
+    "last_ok": "2026-11-28",
     "consecutive_failures": 0
   },
   "华工科技": {
-    "last_ok": "2026-11-27",
+    "last_ok": "2026-11-28",
     "consecutive_failures": 0
   }
 }
